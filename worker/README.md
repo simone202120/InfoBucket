@@ -5,9 +5,10 @@ video (reel Instagram, TikTok, YouTube senza transcript) per InfoBucket.
 È uno dei tre attori del sistema (vedi `infobucket-spec.md` §3, §7): l'app cattura,
 Supabase è il cervello, **il worker fa solo estrazione media**.
 
-> Stato: **scaffold strutturato** (Fase 6 della roadmap). Loop di polling e claim
-> atomico sono reali; le parti che invocano `yt-dlp`/`ffmpeg`/Whisper sono stub
-> marcati `// TODO Fase 6` con il contratto e le note di implementazione.
+> Stato: **Fase 6 implementata**. Loop di polling, claim atomico, caption,
+> download/estrazione audio (`yt-dlp` + `ffmpeg`), trascrizione Whisper e
+> orchestrazione verso `generate` sono reali. L'I/O esterno (processi e rete) è
+> iniettabile, così la logica è coperta da unit test senza eseguire yt-dlp/rete.
 
 ## Cosa fa
 
@@ -41,12 +42,13 @@ src/
   rawContent.ts       composeRawContent() — puro, testato (§7.5)
   generate.ts         invocazione della Edge Function generate (§7.6/§7.7)
   extract/
-    caption.ts        parser puri oEmbed/Open Graph + fetch iniettabile (§7.2)
-    media.ts          downloadAudio() / transcribe() — scaffold yt-dlp/ffmpeg/Whisper
+    caption.ts        parser puri oEmbed/Open Graph/yt-dlp + I/O iniettabile (§7.2)
+    media.ts          downloadAudio()/transcribe()/cleanupAudio() — yt-dlp/ffmpeg/Whisper
 ```
 
-I moduli puri (`composeRawContent`, `parseTiktokOembed`, `parseOpenGraph`) sono
-coperti da test (`*.test.ts`), con I/O e rete mockati/iniettati.
+La logica e i parser (`composeRawContent`, `parseTiktokOembed`, `parseOpenGraph`,
+`parseYoutubeDump`, `parseWhisperResponse`, l'orchestrazione di `processItem`)
+sono coperti da test (`*.test.ts`), con processi esterni e rete iniettati.
 
 ## Esecuzione in locale
 

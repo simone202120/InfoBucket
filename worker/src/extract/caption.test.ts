@@ -2,8 +2,11 @@ import { describe, it, expect } from 'vitest';
 import {
   parseTiktokOembed,
   parseOpenGraph,
+  parseYoutubeDump,
   extractMetaTags,
   tiktokOembedUrl,
+  fetchCaptionMetadata,
+  type CaptionDeps,
 } from './caption.ts';
 
 describe('parseTiktokOembed', () => {
@@ -118,5 +121,106 @@ describe('tiktokOembedUrl', () => {
     expect(tiktokOembedUrl('https://www.tiktok.com/@a/video/123')).toBe(
       'https://www.tiktok.com/oembed?url=https%3A%2F%2Fwww.tiktok.com%2F%40a%2Fvideo%2F123',
     );
+  });
+});
+
+describe('parseYoutubeDump', () => {
+  it('compone titolo + descrizione e usa uploader_id come autore', () => {
+    expect(
+      parseYoutubeDump({
+        title: 'Come fare la pasta',
+        description: 'In questo video spiego...',
+        uploader_id: '@canale',
+        uploader: 'Canale Cucina',
+      }),
+    ).toEqual({
+      caption: 'Come fare la pasta\nIn questo video spiego...',
+      author: '@canale',
+    });
+  });
+
+  it('cade su uploader/channel se manca uploader_id', () => {
+    expect(
+      parseYoutubeDump({ title: 't', channel: 'Canale' }),
+    ).toEqual({ caption: 't', author: 'Canale' });
+  });
+
+  it('usa solo il titolo quando manca la descrizione', () => {
+    expect(parseYoutubeDump({ title: 'solo titolo' }).caption).toBe(
+      'solo titolo',
+    );
+  });
+
+  it('degrada con grazia su input non fidati', () => {
+    expect(parseYoutubeDump(null)).toEqual({ caption: null, author: null });
+    expect(parseYoutubeDump('x')).toEqual({ caption: null, author: null });
+    expect(parseYoutubeDump({})).toEqual({ caption: null, author: null });
+  });
+});
+
+describe('fetchCaptionMetadata', () => {
+  const deps = (over: Partial<CaptionDeps>): CaptionDeps => ({
+    fetcher: () => Promise.reject(new Error('fetcher non atteso')),
+    dumpMetadata: () => Promise.reject(new Error('dumper non atteso')),
+    ...over,
+  });
+
+  it('tiktok: chiama l\'oEmbed via fetcher e ne fa il parse', async () => {
+    let requested = '';
+    const out = await fetchCaptionMetadata(
+      'tiktok',
+      'https://www.tiktok.com/@a/video/1',
+      deps({
+        fetcher: (url) => {
+          requested = url;
+          return Promise.resolve(
+            JSON.stringify({ title: 'cap', author_unique_id: 'a' }),
+          );
+        },
+      }),
+    );
+    expect(requested).toContain('tiktok.com/oembed');
+    expect(out).toEqual({ caption: 'cap', author: '@a' });
+  });
+
+  it('reel: scarica la pagina e legge gli Open Graph', async () => {
+    const html =
+      '<meta property="og:description" content="caption reel">';
+    const out = await fetchCaptionMetadata(
+      'reel',
+      'https://instagram.com/reel/1',
+      deps({ fetcher: () => Promise.resolve(html) }),
+    );
+    expect(out.caption).toBe('caption reel');
+  });
+
+  it('youtube: usa il dumper yt-dlp (non il fetcher HTTP)', async () => {
+    const out = await fetchCaptionMetadata(
+      'youtube',
+      'https://youtu.be/1',
+      deps({
+        dumpMetadata: () =>
+          Promise.resolve(JSON.stringify({ title: 'video', uploader: 'c' })),
+      }),
+    );
+    expect(out).toEqual({ caption: 'video', author: 'c' });
+  });
+
+  it('degrada a EMPTY se l\'I/O fallisce (caption opzionale, §7.2)', async () => {
+    const out = await fetchCaptionMetadata(
+      'tiktok',
+      'https://www.tiktok.com/@a/video/1',
+      deps({ fetcher: () => Promise.reject(new Error('rete giù')) }),
+    );
+    expect(out).toEqual({ caption: null, author: null });
+  });
+
+  it('degrada a EMPTY su JSON malformato', async () => {
+    const out = await fetchCaptionMetadata(
+      'tiktok',
+      'https://www.tiktok.com/@a/video/1',
+      deps({ fetcher: () => Promise.resolve('non-json{') }),
+    );
+    expect(out).toEqual({ caption: null, author: null });
   });
 });

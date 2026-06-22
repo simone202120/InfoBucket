@@ -11,6 +11,13 @@ import type { CaptionMetadata, MediaSourceType } from '../types.ts';
 /** Tipo di fetch iniettabile: `(url) => corpo della risposta`. */
 export type Fetcher = (url: string) => Promise<string>;
 
+/**
+ * Estrazione metadati YouTube via `yt-dlp --dump-json` (niente download dello
+ * stream): più affidabile dell'oEmbed, che non espone la descrizione. Iniettabile
+ * per i test; ritorna il JSON grezzo (stringa) prodotto da yt-dlp.
+ */
+export type MetadataDumper = (url: string) => Promise<string>;
+
 const EMPTY: CaptionMetadata = { caption: null, author: null };
 
 /** Trim → null se vuoto. Difende dai campi remoti vuoti o solo-spazi. */
@@ -112,34 +119,62 @@ export function tiktokOembedUrl(sourceUrl: string): string {
 }
 
 /**
+ * Parsing del JSON di `yt-dlp --dump-json` per YouTube. Funzione PURA.
+ * Campi attesi: `{ title, description?, uploader?, channel?, uploader_id? }`.
+ * Compone la caption come `titolo` + (se presente) `descrizione`; preferisce
+ * l'handle/uploader_id come autore. L'input è non fidato: validiamo prima.
+ */
+export function parseYoutubeDump(json: unknown): CaptionMetadata {
+  if (json === null || typeof json !== 'object') return EMPTY;
+  const obj = json as Record<string, unknown>;
+
+  const title = nullable(obj.title);
+  const description = nullable(obj.description);
+  const caption =
+    title && description ? `${title}\n${description}` : (title ?? description);
+
+  const handle = nullable(obj.uploader_id);
+  const author = handle ?? nullable(obj.uploader) ?? nullable(obj.channel);
+
+  return { caption, author };
+}
+
+/** Dipendenze I/O iniettabili per il recupero caption (testabilità). */
+export interface CaptionDeps {
+  /** Fetch HTTP testuale (oEmbed TikTok, pagina Open Graph Instagram). */
+  readonly fetcher: Fetcher;
+  /** Dump dei metadati YouTube via yt-dlp (`--dump-json`). */
+  readonly dumpMetadata: MetadataDumper;
+}
+
+/**
  * Recupera i metadati leggeri per una fonte media. Sceglie la strategia per
  * `source_type` e degrada a EMPTY su qualunque errore: la caption è opzionale,
  * il flusso prosegue comunque con audio + nota (§7.2, §17).
  *
- * `fetcher` è iniettabile per i test; in produzione sarà un wrapper su `fetch`.
+ * Le dipendenze I/O sono iniettabili per i test; in produzione index.ts passa
+ * un fetcher con timeout e un dumper basato su yt-dlp.
  */
 export async function fetchCaptionMetadata(
   sourceType: MediaSourceType,
   sourceUrl: string,
-  fetcher: Fetcher,
+  deps: CaptionDeps,
 ): Promise<CaptionMetadata> {
   try {
     switch (sourceType) {
       case 'tiktok': {
-        const body = await fetcher(tiktokOembedUrl(sourceUrl));
+        const body = await deps.fetcher(tiktokOembedUrl(sourceUrl));
         return parseTiktokOembed(JSON.parse(body));
       }
       case 'reel': {
         // Instagram: best-effort via Open Graph della pagina pubblica.
-        const html = await fetcher(sourceUrl);
+        const html = await deps.fetcher(sourceUrl);
         return parseOpenGraph(html);
       }
       case 'youtube': {
-        // TODO Fase 6: recuperare titolo + descrizione via oEmbed YouTube
-        // (https://www.youtube.com/oembed?url=...&format=json) o yt-dlp
-        // (`--dump-json`, niente download dello stream). Per ora i metadati
-        // arriveranno comunque dal JSON di yt-dlp in media.ts.
-        return EMPTY;
+        // yt-dlp --dump-json dà titolo + descrizione (l'oEmbed YouTube no).
+        const dump = await deps.dumpMetadata(sourceUrl);
+        return parseYoutubeDump(JSON.parse(dump));
       }
     }
   } catch {
