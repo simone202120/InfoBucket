@@ -116,12 +116,12 @@ Contratto con gli altri attori:
 | File | Ruolo |
 |---|---|
 | `src/index.ts` | Loop di polling: claim atomico `pending→processing`, orchestrazione, errori §7.7, cleanup |
-| `src/env.ts` | Validazione env (SUPABASE_URL, SERVICE_ROLE_KEY, OPENAI_API_KEY, POLL_INTERVAL_MS) |
+| `src/env.ts` | Validazione env (SUPABASE_URL, SERVICE_ROLE_KEY, OPENAI_API_KEY, POLL_INTERVAL_MS; cookie yt-dlp opzionali `YTDLP_COOKIES_FROM_BROWSER`/`YTDLP_COOKIES_FILE` per le fonti con login) |
 | `src/supabase.ts` | Client service role |
 | `src/types.ts` | Stati allineati a `app/src/types/domain.ts` (snake_case lato DB) |
 | `src/rawContent.ts` | `composeRawContent()` puro: blocco [Caption]/[Autore]/[Trascrizione] (§7.5) |
 | `src/extract/caption.ts` | Parser puri oEmbed TikTok / Open Graph IG / YouTube (fetch iniettabile) |
-| `src/extract/media.ts` | **Estrazione media implementata** (Fase 6): `downloadAudio` (yt-dlp `-f bestaudio` + ffmpeg mono 16 kHz) e `transcribe` (Whisper `whisper-1`), con timeout e firme iniettabili per i test |
+| `src/extract/media.ts` | **Estrazione media implementata** (Fase 6): `downloadAudio` (yt-dlp `-f bestaudio` + ffmpeg mono 16 kHz) e `transcribe` (Whisper `whisper-1`), con timeout e firme iniettabili per i test; `ytdlpCookieArgs()` per l'autenticazione delle fonti con login |
 | `src/generate.ts` | Invoca la Edge Function `generate` (`{ item_id }`) dopo l'estrazione (anche su errore) |
 | `Dockerfile` | Node 22 + ffmpeg + yt-dlp, non-root, nessuna porta esposta |
 
@@ -150,6 +150,7 @@ della riga `items` (`mappers.ts` ↔ schema).
   `useItemDetail`), auth (`AuthContext`), `ReviewScreen`, libreria componenti UI,
   schermata `add`. `npm test` → **95 verdi** (23 suite), `typecheck` e `lint` puliti.
 - `worker/`: Vitest — `composeRawContent`, parser caption, estrazione media
-  (`media`), loop di polling (`index`). `npm test` → **47 verdi** (4 file).
+  (`media`, inclusi i cookie yt-dlp), validazione env (`env`), loop di polling
+  (`index`). `npm test` → **56 verdi** (5 file).
 - `supabase/functions/`: `deno test` — detection, validazione output modello, estrazione
   (article/document/youtube), text, fetch-remote, ai, parsing search (da eseguire su Deno).
