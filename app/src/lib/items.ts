@@ -110,3 +110,17 @@ export async function regenerate(id: string): Promise<void> {
   const { error } = await supabase.functions.invoke('generate', { body: { item_id: id } });
   if (error) throw new ItemsError('Rigenerazione non riuscita.');
 }
+
+/**
+ * Ricerca ibrida (semantica + keyword) tra gli elementi salvati/archiviati
+ * (spec §11). L'embedding della query e la fusione avvengono lato server nella
+ * Edge Function `search`; qui mappiamo solo i risultati.
+ */
+export async function searchItems(query: string): Promise<Item[]> {
+  const q = query.trim();
+  if (!q) return [];
+  const { data, error } = await supabase.functions.invoke('search', { body: { q } });
+  if (error) throw new ItemsError('Ricerca non riuscita.');
+  const rows = (data as { items?: ItemRow[] } | null)?.items ?? [];
+  return rows.map(toItem);
+}

@@ -10,6 +10,7 @@ import {
   TextInput,
   View,
   type KeyboardTypeOptions,
+  type ReturnKeyTypeOptions,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
@@ -28,6 +29,9 @@ export interface TextFieldProps {
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   secureTextEntry?: boolean;
   iconLeft?: ReactNode;
+  /** Invio dalla tastiera (es. ricerca a campo libero). */
+  onSubmitEditing?: () => void;
+  returnKeyType?: ReturnKeyTypeOptions;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -42,6 +46,8 @@ export function TextField({
   autoCapitalize,
   secureTextEntry,
   iconLeft,
+  onSubmitEditing,
+  returnKeyType,
   style,
 }: TextFieldProps): JSX.Element {
   const theme = useTheme();
@@ -88,6 +94,8 @@ export function TextField({
           keyboardType={keyboardType}
           autoCapitalize={autoCapitalize}
           secureTextEntry={secureTextEntry}
+          onSubmitEditing={onSubmitEditing}
+          returnKeyType={returnKeyType}
           style={[
             styles.input,
             { fontFamily: theme.font.display, fontSize: theme.type.body.size, color: theme.colors.textPrimary },

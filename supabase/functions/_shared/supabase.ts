@@ -25,3 +25,17 @@ export function createServiceClient(): SupabaseClient {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }
+
+/**
+ * Crea un client che agisce NEL CONTESTO dell'utente: inoltra il suo JWT, così le
+ * query rispettano le RLS e `auth.uid()` è valorizzato. Serve per operazioni
+ * user-scoped lato server (es. la ricerca, che gira come l'utente). Usa la anon key.
+ */
+export function createUserClient(authHeader: string): SupabaseClient {
+  const url = requireEnv("SUPABASE_URL");
+  const anonKey = requireEnv("SUPABASE_ANON_KEY");
+  return createClient(url, anonKey, {
+    global: { headers: { Authorization: authHeader } },
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
