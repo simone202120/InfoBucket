@@ -7,6 +7,7 @@ import {
   transcribe,
   downloadAudio,
   cleanupAudio,
+  ytdlpCookieArgs,
   type ProcessRunner,
   type TranscribeFetch,
 } from './media.ts';
@@ -86,6 +87,33 @@ describe('transcribe', () => {
   });
 });
 
+describe('ytdlpCookieArgs', () => {
+  it('senza opzioni non aggiunge argomenti (comportamento storico)', () => {
+    expect(ytdlpCookieArgs()).toEqual([]);
+    expect(ytdlpCookieArgs({})).toEqual([]);
+  });
+
+  it('usa il browser quando indicato', () => {
+    expect(ytdlpCookieArgs({ cookiesFromBrowser: 'chrome' })).toEqual([
+      '--cookies-from-browser',
+      'chrome',
+    ]);
+  });
+
+  it('usa il file cookie quando indicato', () => {
+    expect(ytdlpCookieArgs({ cookiesFile: '/tmp/cookies.txt' })).toEqual([
+      '--cookies',
+      '/tmp/cookies.txt',
+    ]);
+  });
+
+  it('preferisce il browser al file se entrambi presenti', () => {
+    expect(
+      ytdlpCookieArgs({ cookiesFromBrowser: 'firefox', cookiesFile: '/c.txt' }),
+    ).toEqual(['--cookies-from-browser', 'firefox']);
+  });
+});
+
 describe('downloadAudio', () => {
   it('esegue yt-dlp poi ffmpeg e ritorna il path normalizzato', async () => {
     const calls: string[] = [];
@@ -112,6 +140,31 @@ describe('downloadAudio', () => {
     expect(audio.path.endsWith('audio.m4a')).toBe(true);
     // Il file normalizzato esiste su disco.
     expect((await stat(audio.path)).size).toBeGreaterThan(0);
+    await cleanupAudio(audio);
+  });
+
+  it('inoltra i cookie a yt-dlp quando configurati (es. TikTok login)', async () => {
+    let ytdlpArgs: readonly string[] = [];
+    const runner: ProcessRunner = async (file, args) => {
+      if (file === 'yt-dlp') {
+        ytdlpArgs = args;
+        const outIdx = args.indexOf('-o');
+        const template = args[outIdx + 1];
+        const dir = template ? dirname(template) : undefined;
+        if (dir) await writeFile(join(dir, 'raw.webm'), 'audio');
+      }
+      if (file === 'ffmpeg') {
+        const dst = args[args.length - 1];
+        if (dst) await writeFile(dst, Buffer.alloc(2048, 1));
+      }
+      return '';
+    };
+
+    const audio = await downloadAudio('https://vm.tiktok.com/abc', runner, {
+      cookiesFromBrowser: 'chrome',
+    });
+    expect(ytdlpArgs).toContain('--cookies-from-browser');
+    expect(ytdlpArgs).toContain('chrome');
     await cleanupAudio(audio);
   });
 

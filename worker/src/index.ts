@@ -13,16 +13,14 @@ import { pathToFileURL } from 'node:url';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { loadEnv, type WorkerEnv } from './env.ts';
 import { createSupabase } from './supabase.ts';
-import {
-  fetchCaptionMetadata,
-  type Fetcher,
-  type MetadataDumper,
-} from './extract/caption.ts';
+import { fetchCaptionMetadata, type Fetcher } from './extract/caption.ts';
 import {
   downloadAudio,
   transcribe,
   cleanupAudio,
+  ytdlpCookieArgs,
   type DownloadedAudio,
+  type YtdlpCookieOptions,
 } from './extract/media.ts';
 import { composeRawContent } from './rawContent.ts';
 import { invokeGenerate, type InvokeGenerateResult } from './generate.ts';
@@ -89,11 +87,18 @@ const httpFetcher: Fetcher = async (url) => {
 };
 
 /** Metadati YouTube via `yt-dlp --dump-json` (niente download dello stream). */
-const dumpMetadata: MetadataDumper = (url) =>
-  new Promise<string>((resolve, reject) => {
+function dumpMetadata(url: string, cookies?: YtdlpCookieOptions): Promise<string> {
+  return new Promise<string>((resolve, reject) => {
     execFile(
       'yt-dlp',
-      ['--no-playlist', '--no-warnings', '--skip-download', '--dump-json', url],
+      [
+        '--no-playlist',
+        '--no-warnings',
+        ...ytdlpCookieArgs(cookies),
+        '--skip-download',
+        '--dump-json',
+        url,
+      ],
       { timeout: METADATA_DUMP_TIMEOUT_MS, maxBuffer: 16 * 1024 * 1024 },
       (error, stdout) => {
         if (error) {
@@ -104,6 +109,7 @@ const dumpMetadata: MetadataDumper = (url) =>
       },
     );
   });
+}
 
 /**
  * Dipendenze di estrazione iniettabili: in produzione sono le funzioni reali
@@ -121,15 +127,33 @@ export interface ProcessDeps {
   invokeGenerate(itemId: string, env: WorkerEnv): Promise<InvokeGenerateResult>;
 }
 
-/** Implementazione di produzione delle dipendenze di estrazione. */
-const productionDeps: ProcessDeps = {
-  fetchCaption: (type, url) =>
-    fetchCaptionMetadata(type, url, { fetcher: httpFetcher, dumpMetadata }),
-  downloadAudio: (url) => downloadAudio(url),
-  transcribe: (audioPath, env) => transcribe(audioPath, env),
-  cleanupAudio,
-  invokeGenerate,
-};
+/** Estrae le opzioni cookie di yt-dlp dall'ambiente del worker. */
+function cookieOptions(env: WorkerEnv): YtdlpCookieOptions {
+  return {
+    cookiesFromBrowser: env.ytdlpCookiesFromBrowser,
+    cookiesFile: env.ytdlpCookiesFile,
+  };
+}
+
+/**
+ * Implementazione di produzione delle dipendenze di estrazione. È una factory
+ * (non una const) perché i cookie yt-dlp arrivano dall'ambiente: vanno catturati
+ * in chiusura e propagati a `downloadAudio` e ai metadati YouTube.
+ */
+export function createProductionDeps(env: WorkerEnv): ProcessDeps {
+  const cookies = cookieOptions(env);
+  return {
+    fetchCaption: (type, url) =>
+      fetchCaptionMetadata(type, url, {
+        fetcher: httpFetcher,
+        dumpMetadata: (u) => dumpMetadata(u, cookies),
+      }),
+    downloadAudio: (url) => downloadAudio(url, undefined, cookies),
+    transcribe,
+    cleanupAudio,
+    invokeGenerate,
+  };
+}
 
 function isMediaSourceType(t: string): t is MediaSourceType {
   return t === 'reel' || t === 'tiktok' || t === 'youtube';
@@ -145,7 +169,7 @@ export async function processItem(
   supabase: SupabaseClient,
   env: WorkerEnv,
   item: ClaimedItem,
-  deps: ProcessDeps = productionDeps,
+  deps: ProcessDeps = createProductionDeps(env),
 ): Promise<void> {
   let audio: DownloadedAudio | null = null;
   try {
@@ -230,12 +254,13 @@ export async function runLoop(
   supabase: SupabaseClient,
   env: WorkerEnv,
   signal?: AbortSignal,
+  deps: ProcessDeps = createProductionDeps(env),
 ): Promise<void> {
   while (!signal?.aborted) {
     try {
       const item = await claimNext(supabase);
       if (item) {
-        await processItem(supabase, env, item);
+        await processItem(supabase, env, item, deps);
         continue; // svuota la coda senza pause finché ci sono item.
       }
     } catch (err) {

@@ -21,6 +21,28 @@ export interface DownloadedAudio {
   readonly dir: string;
 }
 
+/**
+ * Cookie per yt-dlp, per le fonti che richiedono login (TikTok). Esattamente una
+ * via per volta: il browser (uso locale) ha priorità sul file (portabile, Docker).
+ */
+export interface YtdlpCookieOptions {
+  readonly cookiesFromBrowser?: string;
+  readonly cookiesFile?: string;
+}
+
+/**
+ * Costruisce gli argomenti cookie di yt-dlp. PURA e testabile. Vuoto = nessuna
+ * autenticazione (comportamento storico). `--cookies-from-browser` legge i cookie
+ * dal profilo del browser indicato; `--cookies` da un file Netscape.
+ */
+export function ytdlpCookieArgs(opts?: YtdlpCookieOptions): readonly string[] {
+  if (opts?.cookiesFromBrowser) {
+    return ['--cookies-from-browser', opts.cookiesFromBrowser];
+  }
+  if (opts?.cookiesFile) return ['--cookies', opts.cookiesFile];
+  return [];
+}
+
 /** Eseguito un processo esterno: ritorna stdout, lancia su exit code != 0. */
 export type ProcessRunner = (
   file: string,
@@ -122,6 +144,7 @@ function assertHttpUrl(url: string): void {
 export async function downloadAudio(
   url: string,
   runner: ProcessRunner = defaultRunner,
+  cookies?: YtdlpCookieOptions,
 ): Promise<DownloadedAudio> {
   assertHttpUrl(url);
 
@@ -134,6 +157,7 @@ export async function downloadAudio(
       [
         '--no-playlist',
         '--no-warnings',
+        ...ytdlpCookieArgs(cookies),
         '-f',
         'bestaudio/best',
         '-o',

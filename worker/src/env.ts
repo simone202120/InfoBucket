@@ -27,6 +27,18 @@ export interface WorkerEnv {
   readonly openaiApiKey: string;
   /** Intervallo di polling in ms tra un claim e il successivo (default 5000). */
   readonly pollIntervalMs: number;
+  /**
+   * Browser da cui yt-dlp legge i cookie (es. 'chrome', 'firefox', 'edge') per le
+   * fonti che richiedono login, come TikTok. Pensato per l'uso in locale, dove il
+   * browser è loggato. `undefined` = nessun cookie. Vedi [[tiktok-needs-login]].
+   */
+  readonly ytdlpCookiesFromBrowser?: string;
+  /**
+   * Path a un file cookie in formato Netscape per yt-dlp: alternativa portabile al
+   * browser (utile in Docker, dove non c'è un browser loggato). Ha priorità più
+   * bassa di `ytdlpCookiesFromBrowser`. `undefined` = nessun cookie.
+   */
+  readonly ytdlpCookiesFile?: string;
 }
 
 /** Numero positivo da stringa, con fallback se assente o non valido. */
@@ -57,5 +69,8 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): WorkerEnv {
     supabaseServiceRoleKey: supabaseServiceRoleKey!,
     openaiApiKey: openaiApiKey!,
     pollIntervalMs: parsePositiveInt(source.POLL_INTERVAL_MS, 5000),
+    // Cookie opzionali: stringa vuota o assente → undefined (nessuna autenticazione).
+    ytdlpCookiesFromBrowser: source.YTDLP_COOKIES_FROM_BROWSER?.trim() || undefined,
+    ytdlpCookiesFile: source.YTDLP_COOKIES_FILE?.trim() || undefined,
   };
 }
