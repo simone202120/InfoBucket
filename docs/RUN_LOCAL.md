@@ -54,9 +54,10 @@ Per **vedere l'app girare** scegli **una** di queste due strade:
 Ti serviranno inoltre, **quando arriverai ai passi server**:
 
 - un account **Supabase** gratuito (<https://supabase.com>) — passo 3;
-- più avanti, una **chiave OpenRouter** e una **chiave OpenAI** per far funzionare
-  l'AI (riassunti, tag, ricerca). **Non servono per il primo avvio dell'app**: le
-  imposti solo quando vuoi provare l'elaborazione AI lato server (§6).
+- una **chiave OpenRouter** e una **chiave OpenAI** per far funzionare l'AI
+  (riassunti, tag, ricerca). **Non servono per il primo avvio dell'app**, ma
+  servono per la pipeline completa (gli item passano `processing → ready`): le
+  imposti quando configuri il lato server (§6).
 
 Verifica rapida:
 
@@ -95,16 +96,23 @@ Ne serve uno tuo.
    CLI e per le connessioni dirette) e scegli la **Region** più vicina a te.
 3. Crea e aspetta qualche minuto che il progetto sia pronto.
 
-### 3.2 Abilita le estensioni (vector e pg_cron)
+### 3.2 Abilita le estensioni
 
-Dal dashboard del progetto: **Database → Extensions**. Cerca e abilita:
+Dal dashboard del progetto: **Database → Extensions**. Cerca e abilita **tutte**
+queste (servono alla pipeline completa):
 
-- **`vector`** (pgvector) — serve per la ricerca semantica;
-- **`pg_cron`** — serve per i job di decadenza/manutenzione.
+- **`vector`** (pgvector) — ricerca semantica (`embedding vector(1536)`);
+- **`pg_cron`** — job di decadenza/manutenzione e sweep di ridispacciamento;
+- **`pg_net`** — chiamate HTTP dal DB: il trigger che innesca `dispatch`
+  (migration `0005`);
+- **`vault`** (Supabase Vault) — conserva i segreti letti dal trigger
+  (URL funzioni + service role), così non sono hardcodati in SQL.
 
-> L'estensione `vector` viene comunque richiesta anche dalla prima migration
+> L'estensione `vector` viene richiesta anche dalla prima migration
 > (`create extension if not exists vector;`), ma abilitarla qui evita sorprese.
-> `pg_cron` invece **va abilitato dal dashboard**: non sempre si attiva via SQL.
+> `pg_cron`, `pg_net` e `vault` **vanno abilitati dal dashboard PRIMA** di
+> applicare le migration `0004`/`0005`: non sempre si attivano via SQL. Sono tutte
+> disponibili sui progetti Supabase.
 
 ### 3.3 Applica le migrations
 
@@ -112,15 +120,19 @@ Lo schema del database (tabelle, indici, RLS, funzioni di ricerca, cron) vive in
 `supabase/migrations/`. I file sono numerati e vanno applicati **in ordine**:
 
 ```
-supabase/migrations/0001_init.sql     # estensioni, tabelle, tipi enum, indici
-supabase/migrations/0002_rls.sql      # Row Level Security
-supabase/migrations/0003_search.sql   # funzioni di ricerca (RPC)
-supabase/migrations/0004_cron.sql     # job pg_cron (decadenza + sweep)
+supabase/migrations/0001_init.sql              # estensioni, tabelle, tipi enum, indici
+supabase/migrations/0002_rls.sql               # Row Level Security
+supabase/migrations/0003_search.sql            # RPC ricerca ibrida (search_items)
+supabase/migrations/0004_cron.sql              # job pg_cron (decadenza + sweep)
+supabase/migrations/0005_dispatch_trigger.sql  # innesco automatico dispatch (trigger + pg_net)
 ```
 
 > Nota: i nomi/numeri sopra riflettono lo stato attuale del repo. Se trovi altri
 > file in `supabase/migrations/`, applicali comunque **in ordine numerico
-> crescente**. La cartella `supabase/` è in evoluzione.
+> crescente**.
+>
+> `0004` richiede `pg_cron` abilitato (§3.2); `0005` richiede `pg_net` e `vault`
+> (§3.2) e, per funzionare davvero, la configurazione del Vault descritta al **§6.1**.
 
 Hai due modi per applicarle. Scegline **uno**.
 
@@ -220,74 +232,129 @@ schermata principale (Inbox).
 
 ---
 
-## 6. (Opzionale) Far funzionare l'AI: i segreti lato server
+## 6. Far funzionare la pipeline AI: segreti, Vault, Edge Functions, Storage
 
-L'app si avvia e ti fa **aggiungere elementi** anche senza chiavi AI, ma il
+L'app si avvia e ti fa **aggiungere elementi** anche senza la parte server, ma il
 **riassunto, i tag, il bucket suggerito e la ricerca semantica** li produce il
-server (le Edge Functions). Per attivarli servono due chiavi API, impostate
-**come secret delle Edge Functions** — **mai** in `app/.env`.
+server. In v1 la pipeline è **completa**: una volta fatti i passi qui sotto, gli
+item percorrono `processing → ready` (riassunto/tag/bucket e ricerca funzionano).
 
-Chiavi necessarie (vedi spec §14):
+Questa sezione è il prerequisito vero per "vedere l'AI lavorare". I passi:
+6.1 secret delle Edge Functions · 6.2 configurazione del Vault (innesco dispatch)
+· 6.3 deploy delle tre Edge Functions · 6.4 bucket Storage `documents`.
+
+### 6.1 Secret delle Edge Functions
+
+Servono tre chiavi API, impostate **come secret delle Edge Functions** — **mai**
+in `app/.env` (vedi spec §14):
 
 | Secret | A cosa serve |
 |---|---|
 | `OPENROUTER_API_KEY` | Generazione: riassunto, tag, suggerimento bucket |
 | `OPENROUTER_MODEL` | Id del modello, default `google/gemini-2.5-flash` |
 | `OPENAI_API_KEY` | Embedding (`text-embedding-3-small`) e trascrizione (`whisper-1`) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Scritture lato server (la trovi in Project Settings → API) |
+
+> `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` sono **iniettate automaticamente**
+> nelle Edge Functions da Supabase: non devi impostarle a mano qui (ti serviranno
+> però per il Vault al §6.2 e per il worker).
 
 Dove si impostano questi secret:
 
-- **Dashboard:** Supabase → **Edge Functions → (la funzione) → Settings → Secrets**,
-  oppure la sezione **Project Settings → Edge Functions / Secrets** del tuo
-  progetto.
+- **Dashboard:** Supabase → **Edge Functions → Secrets** (o **Project Settings →
+  Edge Functions / Secrets**).
 - **CLI** (dalla radice del repo):
 
 ```bash
 supabase secrets set \
   OPENROUTER_API_KEY=sk-or-... \
   OPENROUTER_MODEL=google/gemini-2.5-flash \
-  OPENAI_API_KEY=sk-... \
-  SUPABASE_SERVICE_ROLE_KEY=eyJ...
+  OPENAI_API_KEY=sk-...
 ```
 
-Poi vanno **distribuite** le Edge Functions (`dispatch`, `generate`, …):
-
-```bash
-# (da completare quando le Edge Functions saranno pronte in supabase/functions/)
-supabase functions deploy dispatch
-supabase functions deploy generate
-```
-
-> ⚠️ **Promemoria di sicurezza:** queste quattro variabili **non** devono MAI
-> stare in `app/.env` né nel codice del client. Il client conosce solo URL +
-> anon key. La `service_role` e le chiavi AI vivono **solo** lato server (Edge
-> Functions e worker). Vedi CLAUDE.md §3 e spec §14.
->
 > Le chiavi: OpenRouter si crea su <https://openrouter.ai> (sezione Keys),
 > OpenAI su <https://platform.openai.com> (API keys). Verifica l'id esatto e
 > corrente del modello su OpenRouter: gli id cambiano (spec §17).
 
-> **Stato:** la cartella `supabase/functions/` è in costruzione. Finché le
-> funzioni `dispatch`/`generate` non sono distribuite, l'elaborazione AI non
-> parte: l'app resta usabile per aggiungere e vedere gli elementi, ma il
-> riassunto non comparirà. (da completare quando le Edge Functions sono pronte)
+### 6.2 Configura il Vault (innesco automatico di `dispatch`)
+
+La migration `0005` aggiunge un trigger: quando inserisci un item, il DB chiama da
+solo la funzione `dispatch` via `pg_net`. Per farlo gli servono due valori, che
+legge dal **Supabase Vault** (così la `service_role` non è hardcodata in SQL).
+
+Imposta i due segreti **una tantum**, dal **SQL Editor** del dashboard (ruolo
+privilegiato), **dopo** aver applicato le migration:
+
+```sql
+-- URL base delle Edge Functions del progetto (senza slash finale).
+select vault.create_secret(
+  'https://<project-ref>.supabase.co/functions/v1',
+  'project_functions_url');
+
+-- Service role key (la trovi in Project Settings → API; mai nel client).
+select vault.create_secret('<SERVICE_ROLE_KEY>', 'service_role_key');
+```
+
+> Per ruotare in seguito la chiave:
+> ```sql
+> select vault.update_secret(
+>   (select id from vault.secrets where name = 'service_role_key'),
+>   '<NUOVA_KEY>');
+> ```
+> Se questi segreti mancano, l'INSERT non si rompe ma l'item resta `processing`
+> finché lo sweep non riesce a instradarlo. Dettagli in `supabase/README.md`
+> (sezione "Innesco della pipeline") e nei commenti di `0005_dispatch_trigger.sql`.
+
+### 6.3 Distribuisci le tre Edge Functions
+
+```bash
+# Dalla radice del repo (progetto già collegato con `supabase link`).
+supabase functions deploy dispatch
+supabase functions deploy generate
+supabase functions deploy search
+```
+
+- **`dispatch`** instrada l'item ed estrae il `raw_content` del percorso leggero
+  (articolo/documento/YouTube con transcript), poi chiama `generate`.
+- **`generate`** è il cuore AI (riassunto/tag/bucket + embedding) → `ready`.
+- **`search`** è quella che usa l'app per la ricerca ibrida (richiede il JWT
+  utente: `verify_jwt=true`).
+
+> I valori `verify_jwt` per ciascuna funzione sono già in `supabase/config.toml`.
+
+### 6.4 Crea il bucket Storage `documents`
+
+Per aggiungere **documenti** (PDF/testo) serve un bucket Storage **privato** dove
+l'app carica il file e da cui `dispatch` lo rilegge. Dal dashboard:
+**Storage → New bucket** → nome **`documents`**, lascia **Public** disattivato
+(privato, protetto dalle RLS/service role).
+
+> Il nome `documents` è quello atteso dal codice (`dispatch`). Se aggiungi solo
+> link (articoli/video), il bucket non è strettamente necessario per partire, ma
+> conviene crearlo subito.
+
+### Promemoria di sicurezza
+
+> ⚠️ Le chiavi AI e la `service_role` **non** devono MAI stare in `app/.env` né
+> nel codice del client. Il client conosce solo URL + anon key. I segreti veri
+> vivono **solo** lato server (secret delle Edge Functions, Vault, worker).
+> Vedi CLAUDE.md §3 e spec §14.
 
 ---
 
 ## 7. Limite importante: lo share intent non funziona in Expo Go
 
 La condivisione nativa di Android (condividere un link da un'altra app
-**verso** InfoBucket tramite il menu "Condividi") è descritta nella **spec §12**
-e arriva in **Fase 7**. Richiede una **build EAS** (dev o production):
+**verso** InfoBucket tramite il menu "Condividi") è **implementata** in v1
+(`expo-share-intent`, spec §12), ma è una funzione **nativa**: richiede una
+**build EAS** (dev o production) e **non funziona in Expo Go**.
 
-> **Lo share intent Android NON funziona in Expo Go.**
+> **Lo share intent Android NON funziona in Expo Go**, anche se il codice c'è.
 
 Quindi **in locale, con Expo Go**, provi il flusso alternativo:
 
 - **"Aggiungi incollando un URL"**: apri l'app, incolla manualmente un link nel
-  campo di aggiunta e lo salvi. È esattamente il percorso previsto per le prime
-  fasi (spec §16, Fase 1) e copre il flusso completo senza la parte nativa.
+  campo di aggiunta e lo salvi. È il percorso di cattura completo (innesca la
+  stessa pipeline) senza la comodità del menu "Condividi".
 
 Per avere la condivisione vera dal menu di sistema serve installare l'APK:
 vedi **[INSTALL_ANDROID.md](INSTALL_ANDROID.md)**.
@@ -347,9 +414,16 @@ npm run typecheck   # controllo dei tipi TypeScript
   problemi con Expo SDK 52.
 - Cancella e reinstalla: `rm -rf node_modules package-lock.json && npm install`.
 
-**L'app parte ma il riassunto/tag non compaiono**
-- È atteso finché le Edge Functions non sono distribuite con i secret (§6).
-  L'elemento resta in inbox in stato di lavorazione.
+**L'app parte ma il riassunto/tag non compaiono (l'item resta in lavorazione)**
+- Hai distribuito le tre Edge Functions e impostato i secret AI? (§6.1, §6.3)
+- Hai configurato i due segreti del **Vault** (`project_functions_url`,
+  `service_role_key`)? Senza, il trigger non chiama `dispatch` e l'item resta
+  `processing` (§6.2). Verifica anche che `pg_net` e `vault` siano abilitati (§3.2).
+- Per i **documenti**: esiste il bucket Storage `documents`? (§6.4)
+
+**La ricerca non restituisce nulla / dà errore**
+- La funzione `search` è distribuita (§6.3) e l'`OPENAI_API_KEY` è impostata (§6.1)?
+- La ricerca copre solo gli item `saved`/`archived` (non quelli ancora in inbox).
 
 ---
 

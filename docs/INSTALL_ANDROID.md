@@ -178,26 +178,29 @@ Cosa succede:
 
 ---
 
-## 8. Come funzionerà la condivisione
+## 8. La condivisione (share intent) — implementata
 
-Lo scopo finale è poter **condividere un link da un'altra app** (browser,
-YouTube, Instagram, …) scegliendo **InfoBucket** dal menu "Condividi" di Android.
-L'app riceve il link, mostra un mini-form con campo nota, salva una riga e si
-chiude; il server fa il resto (spec §12).
+Puoi **condividere un link da un'altra app** (browser, YouTube, Instagram, …)
+scegliendo **InfoBucket** dal menu "Condividi" di Android. L'app riceve il link,
+apre la cattura precompilata (estrae il primo URL dal testo condiviso), tu
+confermi e il server fa il resto (spec §12).
 
-Stato attuale:
+Lo share intent è **implementato** in v1 (`expo-share-intent`, registrato come
+plugin in `app/app.config.ts` con il filtro `text/*`). Importante:
 
-- La ricezione dello **share intent** Android arriva in **Fase 7** del piano
-  (spec §16). Richiede una build EAS — questa stessa APK — perché **non funziona
-  in Expo Go**.
-- **Fino a quando lo share intent non è implementato e ricompilato nell'APK**, si
-  usa l'**aggiunta manuale via URL**: apri InfoBucket e incolla il link nel campo
-  di aggiunta. È il flusso previsto per le prime fasi (spec §16, Fase 1) e copre
-  tutto il percorso tranne la comodità del "Condividi".
+- È una funzione **nativa**: compare **solo** in una build EAS (dev o
+  production), questa stessa APK. **Non funziona in Expo Go.**
+- Le variabili `EXPO_PUBLIC_*` (URL + anon key) devono essere presenti **al
+  momento della build** (§5), come per qualunque build: l'app condivisa deve
+  comunque sapere a quale Supabase collegarsi.
 
-> (da completare quando la Fase 7 sarà implementata): dopo aver aggiunto lo share
-> intent nel codice e nella config Android, **ricompila l'APK** (§6) e
-> reinstallalo; solo allora InfoBucket comparirà nel menu Condividi.
+Dopo aver installato l'APK (§6–§7), apri un link in un'altra app → menu
+**Condividi** → scegli **InfoBucket**: si apre la schermata di aggiunta con
+l'URL già compilato.
+
+> Se non vedi InfoBucket nel menu Condividi, controlla di aver installato l'APK
+> da una build EAS (non Expo Go) e che la build sia recente (lo share intent
+> richiede una compilazione nativa, non un semplice ricarico OTA).
 
 ---
 
@@ -241,8 +244,11 @@ mantenendo dati e login.
   in locale dentro `app/`.
 
 **InfoBucket non compare nel menu "Condividi"**
-- È atteso finché la Fase 7 (share intent) non è implementata e ricompilata
-  nell'APK (§8). Nel frattempo usa l'aggiunta manuale via URL.
+- Lo share intent funziona solo da una **build EAS** (dev/production), non in
+  Expo Go (§8). Hai installato proprio l'APK costruito da EAS?
+- Verifica che la build sia recente (lo share intent è nativo: serve una
+  compilazione, non basta ricaricare il bundle JS).
+- In caso, ricompila l'APK (§6) e reinstallalo.
 
 ---
 
