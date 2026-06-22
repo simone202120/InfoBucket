@@ -58,3 +58,55 @@ export async function addItemByUrl({ url, note }: AddItemInput): Promise<Item> {
   if (error || !data) throw new ItemsError('Impossibile salvare il link.');
   return toItem(data as ItemRow);
 }
+
+/** Singolo elemento per la schermata di dettaglio/review. */
+export async function getItem(id: string): Promise<Item> {
+  const { data, error } = await supabase.from('items').select('*').eq('id', id).single();
+  if (error || !data) throw new ItemsError('Elemento non trovato.');
+  return toItem(data as ItemRow);
+}
+
+/** Aggiorna i campi modificabili in review (nota, riassunto, tag). */
+export async function updateItem(
+  id: string,
+  fields: Partial<Pick<Item, 'note' | 'summary' | 'tags'>>,
+): Promise<Item> {
+  const patch: Record<string, unknown> = {};
+  if (fields.note !== undefined) patch.note = fields.note?.trim() || null;
+  if (fields.summary !== undefined) patch.summary = fields.summary?.trim() || null;
+  if (fields.tags !== undefined) patch.tags = fields.tags;
+
+  const { data, error } = await supabase.from('items').update(patch).eq('id', id).select('*').single();
+  if (error || !data) throw new ItemsError('Impossibile aggiornare l\'elemento.');
+  return toItem(data as ItemRow);
+}
+
+/**
+ * Conferma un elemento in un bucket: diventa permanente (`saved`).
+ * Il gesto che "salva" definitivamente (spec §8, §9).
+ */
+export async function confirmItem(id: string, bucketId: string): Promise<Item> {
+  const { data, error } = await supabase
+    .from('items')
+    .update({ bucket_id: bucketId, status: 'saved', confirmed_at: new Date().toISOString() })
+    .eq('id', id)
+    .select('*')
+    .single();
+  if (error || !data) throw new ItemsError('Impossibile salvare nel bucket.');
+  return toItem(data as ItemRow);
+}
+
+export async function deleteItem(id: string): Promise<void> {
+  const { error } = await supabase.from('items').delete().eq('id', id);
+  if (error) throw new ItemsError('Impossibile eliminare l\'elemento.');
+}
+
+/**
+ * Rigenera summary/tag/bucket riusando il `raw_content` già salvato + la nota
+ * aggiornata (spec §6.3). Invoca la Edge Function `generate` lato server; nessun
+ * nuovo download. Il client ricarica l'item al termine.
+ */
+export async function regenerate(id: string): Promise<void> {
+  const { error } = await supabase.functions.invoke('generate', { body: { item_id: id } });
+  if (error) throw new ItemsError('Rigenerazione non riuscita.');
+}
