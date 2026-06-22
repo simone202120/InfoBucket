@@ -57,6 +57,7 @@ function RootNavigator() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="login" />
       <Stack.Screen name="add" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="item/[id]" />
     </Stack>
   );
 }

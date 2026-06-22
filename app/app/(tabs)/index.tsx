@@ -43,7 +43,7 @@ export default function InboxScreen() {
           keyExtractor={(it) => it.id}
           contentContainerStyle={{ padding: t.gutter, gap: t.space[4], flexGrow: 1 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refetch} tintColor={t.colors.primary} />}
-          renderItem={({ item }) => <InboxItem item={item} />}
+          renderItem={({ item }) => <InboxItem item={item} onPress={() => router.push(`/item/${item.id}`)} />}
           ListEmptyComponent={
             <EmptyState
               icon={<InboxIcon color={t.colors.textTertiary} />}
@@ -64,7 +64,7 @@ export default function InboxScreen() {
 }
 
 /** Mappa un Item di dominio sulla ItemCard. */
-function InboxItem({ item }: { item: Item }) {
+function InboxItem({ item, onPress }: { item: Item; onPress: () => void }) {
   const status = item.status === 'processing' ? 'processing' : isExpiring(item) ? 'expiring' : 'ready';
   const left = daysLeft(item) ?? undefined;
   const proposed: ProposedBucket | undefined = item.suggestedBucketName
@@ -80,6 +80,7 @@ function InboxItem({ item }: { item: Item }) {
       status={status}
       proposedBucket={proposed}
       daysLeft={status === 'expiring' ? left : undefined}
+      onPress={onPress}
     />
   );
 }
