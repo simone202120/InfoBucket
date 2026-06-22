@@ -20,8 +20,12 @@ const item: ClaimedItem = {
   media_stage: 'processing',
 };
 
-/** Cattura gli UPDATE su `items` per asserire lo stato finale. */
-function fakeSupabase(): {
+/**
+ * Cattura gli UPDATE su `items` e risponde alle SELECT di status con `status`.
+ * `status` simula lo stato corrente dell'item al momento del controllo di
+ * conferma (default 'ready' = non confermato → la rigenerazione procede).
+ */
+function fakeSupabase(status: string = 'ready'): {
   client: SupabaseClient;
   updates: Record<string, unknown>[];
 } {
@@ -34,6 +38,17 @@ function fakeSupabase(): {
           return {
             eq() {
               return Promise.resolve({ error: null });
+            },
+          };
+        },
+        select() {
+          return {
+            eq() {
+              return {
+                maybeSingle() {
+                  return Promise.resolve({ data: { status }, error: null });
+                },
+              };
             },
           };
         },
@@ -85,6 +100,21 @@ describe('processItem', () => {
     );
     expect(generated).toEqual(['item-1']);
     expect(cleaned).toEqual([audio]); // pulizia sempre
+  });
+
+  it('item già confermato (saved): salva il raw_content ma NON rigenera', async () => {
+    const { client, updates } = fakeSupabase('saved');
+    const { deps, generated } = makeDeps();
+    const logged = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    await processItem(client, env, item, deps);
+
+    // L'estrazione è andata a buon fine: raw_content arricchito viene salvato…
+    expect(updates[0]).toMatchObject({ media_stage: 'done' });
+    expect(updates[0]?.raw_content).toContain('[Trascrizione]');
+    // …ma generate NON viene rieseguito: non sovrascriviamo le scelte dell'utente.
+    expect(generated).toEqual([]);
+    logged.mockRestore();
   });
 
   it('errore di download: media_stage=error MA chiama comunque generate (§7.7)', async () => {

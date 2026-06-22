@@ -17,6 +17,7 @@ import { extractArticle } from "../_shared/extract-article.ts";
 import { extractDocument } from "../_shared/extract-document.ts";
 import { fetchYoutubeTranscript } from "../_shared/youtube-transcript.ts";
 import { fetchText } from "../_shared/fetch-remote.ts";
+import { composeCaptionRawContent, fetchLightCaption } from "../_shared/caption.ts";
 import { invokeFunction } from "../_shared/invoke.ts";
 import { errorResponse, jsonResponse, preflightResponse } from "../_shared/cors.ts";
 import type { SupabaseClient } from "jsr:@supabase/supabase-js@2";
@@ -68,29 +69,36 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // Persiste il tipo rilevato (utile a UI e worker).
     await supabase.from("items").update({ source_type: sourceType }).eq("id", item.id);
 
-    if (needsMediaWorker(sourceType)) {
-      await routeToMedia(supabase, item.id);
-      return jsonResponse({ itemId: item.id, route: "media", sourceType });
-    }
-
-    // Percorso LEGGERO: estrai raw_content inline.
+    // Percorso LEGGERO per TUTTE le fonti: estrai inline ciò che è disponibile
+    // senza il worker. Per tiktok/reel è la caption (oEmbed/Open Graph, pubblica e
+    // senza login): così l'utente ha SUBITO un riassunto, e la trascrizione audio
+    // resta un arricchimento opzionale del worker (`queueMedia`). Solo lo youtube
+    // senza transcript pubblico non ha nulla di leggero → va dritto al worker.
     const result = await extractRawContent(supabase, sourceType, item);
 
     if (result.route === "media") {
-      // youtube senza transcript → percorso media (§6.1).
       await routeToMedia(supabase, item.id);
       return jsonResponse({ itemId: item.id, route: "media", sourceType });
     }
 
-    // Salva il raw_content (+ eventuale errore di estrazione non bloccante) e
-    // chiama generate: anche con contenuto parziale + nota il riassunto è utile.
-    await supabase
-      .from("items")
-      .update({ raw_content: result.rawContent, error: result.error ?? null })
-      .eq("id", item.id);
+    // Salva il raw_content (+ eventuale errore non bloccante); se la fonte ha anche
+    // un media da trascrivere, la accoda al worker (media_stage='pending') nello
+    // stesso update. Poi chiama generate: anche con la sola caption + nota il
+    // riassunto è utile, ed è disponibile in pochi secondi.
+    const patch: Record<string, unknown> = {
+      raw_content: result.rawContent,
+      error: result.error ?? null,
+    };
+    if (result.queueMedia) patch.media_stage = "pending";
+    await supabase.from("items").update(patch).eq("id", item.id);
     await invokeFunction("generate", { itemId: item.id });
 
-    return jsonResponse({ itemId: item.id, route: "light", sourceType });
+    return jsonResponse({
+      itemId: item.id,
+      route: "light",
+      sourceType,
+      queuedMedia: result.queueMedia ?? false,
+    });
   } catch (e) {
     // Errore non gestito: l'item resta 'processing' e lo sweep pg_cron ritenta.
     return errorResponse("Errore interno dispatch", 500, e);
@@ -105,12 +113,6 @@ function readItemId(body: unknown): string | null {
   return typeof raw === "string" && UUID_RE.test(raw) ? raw : null;
 }
 
-/** True per i tipi che richiedono il worker media (download + STT). */
-function needsMediaWorker(sourceType: SourceType): boolean {
-  // 'youtube' è nel percorso leggero, con fallback a media se manca il transcript.
-  return sourceType === "reel" || sourceType === "tiktok";
-}
-
 /** Mette l'item in coda per il worker media. */
 async function routeToMedia(supabase: SupabaseClient, itemId: string): Promise<void> {
   const { error } = await supabase
@@ -121,14 +123,15 @@ async function routeToMedia(supabase: SupabaseClient, itemId: string): Promise<v
 }
 
 type ExtractResult =
-  | { route: "light"; rawContent: string; error?: string }
+  | { route: "light"; rawContent: string; error?: string; queueMedia?: boolean }
   | { route: "media" };
 
 /**
  * Estrae il raw_content per il percorso leggero. Ritorna route='media' solo per
- * lo YouTube senza transcript. In caso di estrazione fallita ritorna comunque
- * route='light' con un messaggio in `error`: l'item NON sparisce e generate gira
- * sulla sola nota.
+ * lo YouTube senza transcript. Per tiktok/reel estrae la caption e segnala
+ * `queueMedia` (il worker aggiungerà la trascrizione). In caso di estrazione
+ * fallita ritorna comunque route='light' con un messaggio in `error`: l'item NON
+ * sparisce e generate gira sulla sola nota.
  */
 async function extractRawContent(
   supabase: SupabaseClient,
@@ -175,6 +178,19 @@ async function extractRawContent(
       const transcript = await fetchYoutubeTranscript(item.source_url);
       // Niente transcript pubblico → il worker estrarrà l'audio (§6.1).
       return transcript ? { route: "light", rawContent: transcript } : { route: "media" };
+    }
+
+    case "tiktok":
+    case "reel": {
+      // Caption pubblica (oEmbed TikTok / Open Graph IG): riassunto immediato senza
+      // worker né login. `queueMedia` accoda comunque l'audio per la trascrizione.
+      if (!item.source_url) return { route: "light", rawContent: "", queueMedia: true };
+      const meta = await fetchLightCaption(sourceType, item.source_url, fetchText);
+      return {
+        route: "light",
+        rawContent: composeCaptionRawContent(meta),
+        queueMedia: true,
+      };
     }
 
     default:

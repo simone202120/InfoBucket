@@ -24,7 +24,12 @@ import {
 } from './extract/media.ts';
 import { composeRawContent } from './rawContent.ts';
 import { invokeGenerate, type InvokeGenerateResult } from './generate.ts';
-import type { CaptionMetadata, ClaimedItem, MediaSourceType } from './types.ts';
+import type {
+  CaptionMetadata,
+  ClaimedItem,
+  ItemStatus,
+  MediaSourceType,
+} from './types.ts';
 
 /** Colonne minime necessarie al worker (vedi types.ts). */
 const ITEM_COLUMNS = 'id, source_url, source_type, note, media_stage';
@@ -219,11 +224,36 @@ export async function processItem(
     }
   }
 
-  // §7.6/§7.7: passa il testimone a generate in OGNI caso.
+  // Rigenera con il raw_content arricchito, MA solo se l'utente non ha già
+  // confermato l'item: `dispatch` ha già prodotto un riassunto dalla caption per
+  // tiktok/reel, quindi il worker QUI è un arricchimento (aggiunge la trascrizione).
+  // Rieseguire generate su un item 'saved'/'archived' lo riporterebbe a 'ready'
+  // sovrascrivendo le scelte dell'utente (human-in-the-loop, §1) — è anche lo stato
+  // incoerente `saved`+`processing` osservato. Lo status si rilegge fresco perché
+  // l'utente può aver confermato durante il download lento.
+  if (await isConfirmed(supabase, item.id)) {
+    console.log(`item ${item.id} già confermato: salto la rigenerazione.`);
+    return;
+  }
+
   const result = await deps.invokeGenerate(item.id, env);
   if (!result.ok) {
     console.error(`generate ha risposto ${result.status} per item ${item.id}`);
   }
+}
+
+/** True se l'item è stato confermato dall'utente (saved) o archiviato. */
+async function isConfirmed(
+  supabase: SupabaseClient,
+  id: string,
+): Promise<boolean> {
+  const { data } = await supabase
+    .from('items')
+    .select('status')
+    .eq('id', id)
+    .maybeSingle();
+  const status = (data as { status?: ItemStatus } | null)?.status;
+  return status === 'saved' || status === 'archived';
 }
 
 interface ItemUpdate {
