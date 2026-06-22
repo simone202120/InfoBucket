@@ -42,7 +42,7 @@ Entry: `expo-router` (cartella `app/app/`).
 | `src/theme/tokens.ts` | Valori grezzi del design system (colori light/dark, accenti, type, spacing, radii, shadow). Porting dei `.css` | — |
 | `src/theme/index.ts` | **Adapter del tema**: `ThemeProvider`, `useTheme`, `useThemeControls`, `sourceColor()`. UNICO punto che l'app conosce per lo stile | `tokens.ts`, `types/domain.ts` |
 | `src/theme/icons.tsx` | Icone (wrapper `lucide-react-native`, default coerenti) + `SOURCE_ICON` | `types/domain.ts` |
-| `src/theme/components/*` | **Libreria UI** (RN) del design system: Button, TextField, NoteField, SourceStamp, StatusBadge, Tag, BucketChip, **BucketCard**, ItemCard, EmptyState, ErrorBanner, AddButton. Stile solo da `useTheme()` | `@/theme`, `icons` |
+| `src/theme/components/*` | **Libreria UI** (RN) del design system: Button, TextField, NoteField, SourceStamp, StatusBadge, Tag, BucketChip, **BucketCard**, ItemCard, EmptyState, ErrorBanner, AddButton, **TabBar** (barra galleggiante con pill attiva che si espande). Stile solo da `useTheme()` | `@/theme`, `icons` |
 | `src/theme/motion.tsx` | Primitive di animazione sobrie (`FadeInUp`, `PressableScale`, `staggerDelay`, `useReducedMotion`), rispettano "riduci movimento". Esposte da `@/theme` | `@/theme` |
 | `src/lib/env.ts` | Legge/valida `EXPO_PUBLIC_*` (solo URL + anon key, nessun segreto) | — |
 | `src/lib/supabase.ts` | Client Supabase (anon key + auth, AsyncStorage) | `env.ts` |
@@ -67,7 +67,7 @@ Entry: `expo-router` (cartella `app/app/`).
 | Route | File | Ruolo |
 |---|---|---|
 | `_layout` | `app/_layout.tsx` | Carica font, monta `ThemeProvider`+`AuthProvider`+`ShareIntentProvider`, **auth-gate** (redirect login↔app) e **share intent**: a link condiviso → apre /add precompilato (`extractFirstUrl`). Registra le route (incl. `bucket/[id]`, `settings` modale) |
-| `(tabs)/_layout` | `app/(tabs)/_layout.tsx` | **Tab bar** Inbox·Libreria·Cerca (token tema) + **AddButton "+" flottante GLOBALE** sopra la tab bar (design system) |
+| `(tabs)/_layout` | `app/(tabs)/_layout.tsx` | Monta il **`TabBar` del design system** (Inbox·Libreria·Cerca) adattando lo stato di expo-router (rotta↔tab) + **AddButton "+" flottante GLOBALE** sopra la barra |
 | `/login` | `app/login.tsx` | Accesso/registrazione (usa `useAuth`, `Button`, `TextField`, `ErrorBanner`) |
 | `/` (tab) | `app/(tabs)/index.tsx` | **Inbox**: lista `ItemCard` (comparsa staggered), pull-to-refresh, header con Archivio + **Impostazioni**, stato vuoto/errore |
 | `/search` (tab) | `app/(tabs)/search.tsx` | **Ricerca** ibrida (semantica + keyword) su saved/archived via `useSearch` → Edge Function `search` |

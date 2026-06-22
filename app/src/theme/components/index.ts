@@ -14,3 +14,4 @@ export { NoteField, type NoteFieldProps } from './NoteField';
 export { EmptyState, type EmptyStateProps } from './EmptyState';
 export { ErrorBanner, type ErrorBannerProps } from './ErrorBanner';
 export { AddButton, type AddButtonProps } from './AddButton';
+export { TabBar, type TabBarProps, type TabBarItem } from './TabBar';
