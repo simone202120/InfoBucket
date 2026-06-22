@@ -133,7 +133,8 @@ i valori vivono in `app/src/theme/tokens.ts`. Se cambiano i `.css`, riallinea i 
 
 ## `docs/`
 
-`CODE_MAP.md` (questo), `RUN_LOCAL.md` (prova in locale), `INSTALL_ANDROID.md` (APK su telefono).
+`CODE_MAP.md` (questo), `RUN_LOCAL.md` (prova in locale), `DEPLOY.md` (function +
+worker su VPS + cookie), `INSTALL_ANDROID.md` (APK su telefono).
 
 ---
 
