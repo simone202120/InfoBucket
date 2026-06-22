@@ -15,6 +15,13 @@ const config: ExpoConfig = {
   android: {
     package: 'com.infobucket.app',
   },
+  // Target v1 è solo Android, ma il config plugin di expo-share-intent valuta
+  // anche il ramo iOS in fase di `expo start` e richiede un bundleIdentifier:
+  // senza, la risoluzione della config fallisce (anche per Expo Go). Lo definiamo
+  // per coerenza con l'identità Android, pur non spedendo su iOS in v1.
+  ios: {
+    bundleIdentifier: 'com.infobucket.app',
+  },
   plugins: [
     'expo-router',
     'expo-font',

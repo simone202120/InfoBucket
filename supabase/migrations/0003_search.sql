@@ -36,13 +36,16 @@ as $$
   semantic as (
     select
       i.id,
-      row_number() over (order by i.embedding <=> query_embedding) as rank
+      -- L'operatore <=> (cosine distance) vive nello schema dell'estensione
+      -- pgvector (public, dove 0001 la installa). Con `search_path = ''` va
+      -- qualificato esplicitamente via OPERATOR(), come per i nomi di tabella.
+      row_number() over (order by i.embedding operator(public.<=>) query_embedding) as rank
     from public.items i
     where i.user_id = auth.uid()
       and i.status in ('saved', 'archived')
       and i.embedding is not null
       and query_embedding is not null
-    order by i.embedding <=> query_embedding
+    order by i.embedding operator(public.<=>) query_embedding
     limit greatest(match_count * 4, match_count)
   ),
   -- Candidati keyword: full-text match in italiano, ordinati per ts_rank.

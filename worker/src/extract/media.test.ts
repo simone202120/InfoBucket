@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { mkdtemp, writeFile, stat, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import {
   parseWhisperResponse,
   transcribe,
@@ -95,7 +95,9 @@ describe('downloadAudio', () => {
         // Simula il file scaricato che yt-dlp avrebbe prodotto.
         const outIdx = args.indexOf('-o');
         const template = args[outIdx + 1];
-        const dir = template?.slice(0, template.lastIndexOf('/'));
+        // `dirname` gestisce sia `/` (POSIX) sia `\` (Windows): il template è
+        // costruito con path.join, quindi il separatore dipende dalla piattaforma.
+        const dir = template ? dirname(template) : undefined;
         if (dir) await writeFile(join(dir, 'raw.webm'), 'audio');
       }
       if (file === 'ffmpeg') {

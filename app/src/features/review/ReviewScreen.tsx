@@ -411,7 +411,7 @@ function ConfirmBucket({ item, buckets, confirming, onConfirm }: ConfirmBucketPr
 
       {suggestion ? (
         <View style={{ gap: t.space[3] }}>
-          <Text style={metaStyle(t)}>Proposta dall'AI</Text>
+          <Text style={metaStyle(t)}>Proposta dall&apos;AI</Text>
           <BucketChip
             name={suggestion.name}
             isNew={suggestion.isNew}
