@@ -14,9 +14,14 @@ const config: ExpoConfig = {
   newArchEnabled: true,
   android: {
     package: 'com.infobucket.app',
-    // Lo share intent ACTION_SEND verrà aggiunto in Fase 7 (richiede dev/prod build EAS).
   },
-  plugins: ['expo-router', 'expo-font'],
+  plugins: [
+    'expo-router',
+    'expo-font',
+    // Share intent Android (§12): riceve link/testo condivisi da altre app.
+    // Richiede una dev/production build EAS (non funziona in Expo Go).
+    ['expo-share-intent', { androidIntentFilters: ['text/*'] }],
+  ],
   experiments: {
     typedRoutes: true,
   },

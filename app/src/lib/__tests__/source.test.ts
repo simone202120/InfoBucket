@@ -1,4 +1,4 @@
-import { detectSourceType, hostnameOf, isValidHttpUrl } from '../source';
+import { detectSourceType, extractFirstUrl, hostnameOf, isValidHttpUrl } from '../source';
 
 describe('detectSourceType', () => {
   it('riconosce YouTube (entrambi i domini)', () => {
@@ -27,6 +27,16 @@ describe('hostnameOf', () => {
   });
   it('ritorna null per input non valido', () => {
     expect(hostnameOf('boh')).toBeNull();
+  });
+});
+
+describe('extractFirstUrl', () => {
+  it('estrae l\'URL da un testo condiviso', () => {
+    expect(extractFirstUrl('Guarda qui https://example.com/x ciao')).toBe('https://example.com/x');
+  });
+  it('ritorna null se non c\'è un URL', () => {
+    expect(extractFirstUrl('nessun link')).toBeNull();
+    expect(extractFirstUrl(null)).toBeNull();
   });
 });
 

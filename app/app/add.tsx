@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,7 +11,9 @@ import { LinkIcon, XIcon } from '@/theme/icons';
 export default function AddScreen() {
   const t = useTheme();
   const router = useRouter();
-  const [url, setUrl] = useState('');
+  // Precompilato quando si arriva da una condivisione (share intent, §12).
+  const { url: sharedUrl } = useLocalSearchParams<{ url?: string }>();
+  const [url, setUrl] = useState(sharedUrl ?? '');
   const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);

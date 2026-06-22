@@ -6,7 +6,10 @@ import { addItemByUrl } from '@/lib/items';
 import { ThemeProvider } from '@/theme';
 
 const mockBack = jest.fn();
-jest.mock('expo-router', () => ({ useRouter: () => ({ back: mockBack, push: jest.fn() }) }));
+jest.mock('expo-router', () => ({
+  useRouter: () => ({ back: mockBack, push: jest.fn() }),
+  useLocalSearchParams: () => ({}),
+}));
 jest.mock('@/lib/items', () => ({
   addItemByUrl: jest.fn(),
   ItemsError: class ItemsError extends Error {},

@@ -25,6 +25,16 @@ export function detectSourceType(url: string | null | undefined): SourceType {
   return 'article';
 }
 
+/**
+ * Estrae il primo URL http(s) da un testo condiviso (lo share intent può passare
+ * "Guarda qui https://…" invece di un URL pulito). Null se non ce n'è.
+ */
+export function extractFirstUrl(text: string | null | undefined): string | null {
+  if (!text) return null;
+  const match = text.match(/https?:\/\/[^\s]+/i);
+  return match ? match[0] : null;
+}
+
 /** True se l'URL è http/https ben formato (validazione input esterno). */
 export function isValidHttpUrl(url: string): boolean {
   try {
