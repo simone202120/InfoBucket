@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { ActivityIndicator, FlatList, RefreshControl, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/features/auth';
 import { useInbox } from '@/features/inbox/useInbox';
@@ -7,7 +7,7 @@ import { daysLeft, isExpiring } from '@/lib/lifecycle';
 import { hostnameOf } from '@/lib/source';
 import { useTheme } from '@/theme';
 import { AddButton, Button, EmptyState, ErrorBanner, ItemCard, type ProposedBucket } from '@/theme/components';
-import { InboxIcon } from '@/theme/icons';
+import { ArchiveIcon, InboxIcon } from '@/theme/icons';
 import type { Item } from '@/types/domain';
 
 export default function InboxScreen() {
@@ -24,7 +24,12 @@ export default function InboxScreen() {
         <Text style={{ color: t.colors.textPrimary, fontFamily: t.font.displayBold, fontSize: t.type.title.size, lineHeight: t.type.title.lh }}>
           Inbox
         </Text>
-        <Button variant="ghost" size="sm" onPress={signOut}>Esci</Button>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space[2] }}>
+          <Pressable onPress={() => router.push('/archive')} accessibilityRole="button" accessibilityLabel="Archivio" hitSlop={8} style={{ padding: t.space[2] }}>
+            <ArchiveIcon color={t.colors.textSecondary} size={22} />
+          </Pressable>
+          <Button variant="ghost" size="sm" onPress={signOut}>Esci</Button>
+        </View>
       </View>
 
       {error ? (

@@ -27,6 +27,17 @@ export async function listInbox(): Promise<Item[]> {
   return (data as ItemRow[]).map(toItem);
 }
 
+/** Elementi archiviati (decaduti dall'inbox), dal più recente. Recuperabili (§10). */
+export async function listArchived(): Promise<Item[]> {
+  const { data, error } = await supabase
+    .from('items')
+    .select('*')
+    .eq('status', 'archived')
+    .order('archived_at', { ascending: false });
+  if (error) throw new ItemsError('Impossibile caricare l\'archivio.');
+  return (data as ItemRow[]).map(toItem);
+}
+
 export interface AddItemInput {
   url: string;
   note?: string | null;
