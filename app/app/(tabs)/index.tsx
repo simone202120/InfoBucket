@@ -1,19 +1,17 @@
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '@/features/auth';
 import { useInbox } from '@/features/inbox/useInbox';
 import { daysLeft, isExpiring } from '@/lib/lifecycle';
 import { hostnameOf } from '@/lib/source';
-import { useTheme } from '@/theme';
-import { AddButton, Button, EmptyState, ErrorBanner, ItemCard, type ProposedBucket } from '@/theme/components';
-import { ArchiveIcon, InboxIcon } from '@/theme/icons';
+import { FadeInUp, staggerDelay, useTheme } from '@/theme';
+import { EmptyState, ErrorBanner, ItemCard, type ProposedBucket } from '@/theme/components';
+import { ArchiveIcon, InboxIcon, SettingsIcon } from '@/theme/icons';
 import type { Item } from '@/types/domain';
 
 export default function InboxScreen() {
   const t = useTheme();
   const router = useRouter();
-  const { signOut } = useAuth();
   const { items, loading, refreshing, error, refetch } = useInbox();
 
   const openAdd = () => router.push('/add');
@@ -28,7 +26,9 @@ export default function InboxScreen() {
           <Pressable onPress={() => router.push('/archive')} accessibilityRole="button" accessibilityLabel="Archivio" hitSlop={8} style={{ padding: t.space[2] }}>
             <ArchiveIcon color={t.colors.textSecondary} size={22} />
           </Pressable>
-          <Button variant="ghost" size="sm" onPress={signOut}>Esci</Button>
+          <Pressable onPress={() => router.push('/settings')} accessibilityRole="button" accessibilityLabel="Impostazioni" hitSlop={8} style={{ padding: t.space[2] }}>
+            <SettingsIcon color={t.colors.textSecondary} size={22} />
+          </Pressable>
         </View>
       </View>
 
@@ -48,7 +48,11 @@ export default function InboxScreen() {
           keyExtractor={(it) => it.id}
           contentContainerStyle={{ padding: t.gutter, gap: t.space[4], flexGrow: 1 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refetch} tintColor={t.colors.primary} />}
-          renderItem={({ item }) => <InboxItem item={item} onPress={() => router.push(`/item/${item.id}`)} />}
+          renderItem={({ item, index }) => (
+            <FadeInUp delay={staggerDelay(index)}>
+              <InboxItem item={item} onPress={() => router.push(`/item/${item.id}`)} />
+            </FadeInUp>
+          )}
           ListEmptyComponent={
             <EmptyState
               icon={<InboxIcon color={t.colors.textTertiary} />}
@@ -60,10 +64,6 @@ export default function InboxScreen() {
           }
         />
       )}
-
-      <View style={{ position: 'absolute', right: t.gutter, bottom: t.space[7] }}>
-        <AddButton onPress={openAdd} />
-      </View>
     </SafeAreaView>
   );
 }
