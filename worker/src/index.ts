@@ -9,6 +9,7 @@
  * Nessuna porta aperta: solo connessioni in uscita verso Supabase e le API (§3).
  */
 import { execFile } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { loadEnv, type WorkerEnv } from './env.ts';
 import { createSupabase } from './supabase.ts';
@@ -256,7 +257,11 @@ async function main(): Promise<void> {
 }
 
 // Avvia solo se eseguito direttamente (non quando importato dai test).
-if (import.meta.url === `file://${process.argv[1]}`) {
+// `pathToFileURL` normalizza il path di argv[1] nello stesso formato di
+// `import.meta.url` (file:///, slash in avanti) su ogni piattaforma: il
+// confronto stringa grezzo `file://${argv[1]}` fallirebbe su Windows, dove
+// argv usa i backslash, lasciando il worker senza avviare main().
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((err) => {
     // Errore fatale all'avvio (tipicamente env mancante): esci con codice != 0.
     console.error(err instanceof Error ? err.message : String(err));
