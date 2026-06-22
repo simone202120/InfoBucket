@@ -1,0 +1,31 @@
+<!-- @dsCard group="Colors" viewport="700x200" name="Accent themes" subtitle="User-selectable primary — set data-accent on the root. Olive is the default; status colors stay fixed." -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="../styles.css" />
+<style>
+  body { margin: 0; font-family: var(--font-ui); background: var(--bg); padding: 20px 22px; }
+  .row { display: flex; gap: 14px; flex-wrap: wrap; }
+  .cell { flex: 1 1 0; min-width: 96px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+  .sw { width: 100%; height: 46px; border-radius: 12px; background: var(--primary); display: flex; align-items: center; justify-content: center; }
+  .sw .dot { width: 18px; height: 18px; border-radius: 6px; background: var(--primary-soft); }
+  .pill { font-family: var(--font-mono); font-size: 9px; text-transform: uppercase; letter-spacing: .06em; font-weight: 700;
+    padding: 3px 8px; border-radius: 999px; background: var(--primary-soft); color: var(--primary); }
+  .lbl { display: flex; flex-direction: column; gap: 1px; }
+  .name { font-size: 13px; font-weight: 800; letter-spacing: -.01em; color: var(--text-primary); }
+  .name small { font-family: var(--font-mono); font-weight: 400; font-size: 8.5px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: .06em; margin-left: 5px; }
+  .hex { font-family: var(--font-mono); font-size: 10px; color: var(--text-secondary); letter-spacing: .03em; }
+</style>
+</head>
+<body>
+  <div class="row">
+    <div class="cell"><div class="sw"><div class="dot"></div></div><div class="lbl"><div class="name">Olive <small>default</small></div><div class="hex">#7CA84F</div></div><span class="pill">Action</span></div>
+    <div class="cell" data-accent="cobalt"><div class="sw"><div class="dot"></div></div><div class="lbl"><div class="name">Cobalt</div><div class="hex">#2D5AD9</div></div><span class="pill">Action</span></div>
+    <div class="cell" data-accent="seafoam"><div class="sw"><div class="dot"></div></div><div class="lbl"><div class="name">Seafoam</div><div class="hex">#12A199</div></div><span class="pill">Action</span></div>
+    <div class="cell" data-accent="blush"><div class="sw"><div class="dot"></div></div><div class="lbl"><div class="name">Blush</div><div class="hex">#DC6F94</div></div><span class="pill">Action</span></div>
+    <div class="cell" data-accent="tangerine"><div class="sw"><div class="dot"></div></div><div class="lbl"><div class="name">Tangerine</div><div class="hex">#E5731F</div></div><span class="pill">Action</span></div>
+    <div class="cell" data-accent="oxblood"><div class="sw"><div class="dot"></div></div><div class="lbl"><div class="name">Oxblood</div><div class="hex">#8E2E3C</div></div><span class="pill">Action</span></div>
+  </div>
+</body>
+</html>

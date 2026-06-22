@@ -1,0 +1,143 @@
+/* ============================================================================
+   InfoBucket — Color tokens
+   Position: "Living Archive" — cool ink-slate neutrals on paper, a calm olive
+   green for action (the default accent), and warm amber reserved ONLY for
+   aging/expiry. The PRIMARY group is a user-selectable accent (see accents.css);
+   STATUS colors are fixed — they are information, never personalization.
+   Two structural signal systems are first-class: SOURCE and STATE.
+   ============================================================================ */
+
+:root {
+  /* ---- Named brand palette (the 4-6 hex the brief asks for) ---------------- */
+  --ink:        #16202B;  /* deep cool ink — primary text, dark surfaces  */
+  --slate:      #5B6878;  /* the brand neutral — secondary text, chrome   */
+  --paper:      #F1F4F7;  /* cool paper — app background                  */
+  --olive:      #7CA84F;  /* primary / action — calm olive green (default) */
+  --amber:      #C77D29;  /* aging / expiry signal — the one warm note     */
+  --mist:       #DCE3EA;  /* hairline borders, dividers, rails            */
+
+  /* ---- LIGHT THEME semantic tokens (default) ------------------------------ */
+  --bg:              var(--paper);
+  --bg-sunken:       #E7ECF1;            /* search wells, inset rows         */
+  --surface:         #FFFFFF;            /* cards, sheets                    */
+  --surface-raised:  #FFFFFF;            /* menus, FAB                       */
+  --surface-hover:   #F5F8FA;
+
+  --text-primary:    #16202B;
+  --text-secondary:  #5B6878;
+  --text-tertiary:   #8995A3;            /* timestamps, faint meta           */
+  --text-on-primary: #16240F;            /* dark ink reads on the olive accent */
+  --text-on-accent:  #FFFFFF;
+
+  --primary:         #7CA84F;            /* action / brand (default accent)   */
+  --primary-hover:   #6E9A43;
+  --primary-press:   #5E8638;
+  --primary-soft:    #ECF1DE;            /* tinted fills, selected chips     */
+  --primary-soft-2:  #D9E6C2;
+
+  --accent:          #C77D29;            /* expiry / aging warmth            */
+  --accent-soft:     #F6E7D2;
+
+  --border:          #DCE3EA;
+  --border-strong:   #C3CDD8;
+  --focus-ring:      #7CA84F;
+
+  /* ---- Status (item lifecycle) ------------------------------------------- */
+  --status-processing:      #7C8A99;     /* in lavorazione — neutral, quiet  */
+  --status-processing-soft: #E7ECF1;
+  --status-ready:           #5E8E2E;     /* pronto — fixed "go" green          */
+  --status-ready-soft:      #EAF1DC;
+  --status-saved:           #2F8F5B;     /* salvato — settled green          */
+  --status-saved-soft:      #DDEFE4;
+  --status-archived:        #8995A3;     /* in archivio — dimmed             */
+  --status-archived-soft:   #E7ECF1;
+  --status-expiring:         #C77D29;    /* in scadenza — amber              */
+  --status-expiring-soft:   #F6E7D2;
+
+  /* ---- Feedback ---------------------------------------------------------- */
+  --success:        #2F8F5B;
+  --success-soft:   #DDEFE4;
+  --warning:        #C77D29;
+  --warning-soft:   #F6E7D2;
+  --danger:         #C24338;             /* destructive / delete             */
+  --danger-hover:   #A8362C;
+  --danger-soft:    #F7DEDB;
+
+  /* ---- Source palette (provenance — the signature system) ----------------
+     Each origin owns a hue used ONLY in source stamps + spines.            */
+  --src-article:       #3B6EA5;          /* article / link                   */
+  --src-article-soft:  #DEE8F2;
+  --src-video:         #C8453C;          /* YouTube / video                  */
+  --src-video-soft:    #F6DEDC;
+  --src-social:        #7C5CC4;          /* reel / social                    */
+  --src-social-soft:   #E7DFF5;
+  --src-document:      #3F8F6B;          /* document / PDF                   */
+  --src-document-soft: #DCEEE5;
+  --src-note:          #5B6878;          /* plain note / manual              */
+  --src-note-soft:     #E4E9EE;
+
+  color-scheme: light;
+}
+
+/* ============================================================================
+   DARK THEME — deep ink, lifted surfaces, brighter olive & amber so the two
+   structural signals stay legible at night.
+   ============================================================================ */
+[data-theme="dark"] {
+  --bg:              #0E141B;
+  --bg-sunken:       #0A0F15;
+  --surface:         #18212C;
+  --surface-raised:  #212C39;
+  --surface-hover:   #1F2A36;
+
+  --text-primary:    #EAEEF2;
+  --text-secondary:  #9DAAB8;
+  --text-tertiary:   #6C7A89;
+  --text-on-primary: #0C1A0F;
+  --text-on-accent:  #1B1206;
+
+  --primary:         #9CC57E;
+  --primary-hover:   #ACD08F;
+  --primary-press:   #8AB76B;
+  --primary-soft:    #1E2D17;
+  --primary-soft-2:  #2A3D20;
+
+  --accent:          #E0A24C;
+  --accent-soft:     #36281550;
+
+  --border:          #2A3540;
+  --border-strong:   #3A4856;
+  --focus-ring:      #9CC57E;
+
+  --status-processing:      #8B98A6;
+  --status-processing-soft: #232E3A;
+  --status-ready:           #8FBE6A;
+  --status-ready-soft:      #1E2D17;
+  --status-saved:           #4FB47C;
+  --status-saved-soft:      #16301F;
+  --status-archived:        #6C7A89;
+  --status-archived-soft:   #1E2832;
+  --status-expiring:        #E0A24C;
+  --status-expiring-soft:   #33260F;
+
+  --success:        #4FB47C;
+  --success-soft:   #16301F;
+  --warning:        #E0A24C;
+  --warning-soft:   #33260F;
+  --danger:         #E2675C;
+  --danger-hover:   #ED7A70;
+  --danger-soft:    #381A18;
+
+  --src-article:       #6FA3D6;
+  --src-article-soft:  #16273A;
+  --src-video:         #E26A60;
+  --src-video-soft:    #381C1A;
+  --src-social:        #A88BE0;
+  --src-social-soft:   #251C3A;
+  --src-document:      #5FB68A;
+  --src-document-soft: #15301F;
+  --src-note:          #9DAAB8;
+  --src-note-soft:     #232E3A;
+
+  color-scheme: dark;
+}

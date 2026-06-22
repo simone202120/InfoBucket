@@ -1,0 +1,25 @@
+<!-- @dsCard group="Type" viewport="700x180" name="Utility — Space Mono" subtitle="Catalog metadata: source labels, counts, countdowns, tags" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="../styles.css" />
+<style>
+  body { margin: 0; font-family: var(--font-mono); background: var(--bg); color: var(--text-primary); padding: 24px; }
+  .grid { display: flex; flex-direction: column; gap: 14px; }
+  .row { display: flex; align-items: baseline; gap: 16px; }
+  .tag { font-size: 10px; color: var(--text-tertiary); width: 130px; flex: none; letter-spacing: .04em; }
+  .label { font-size: var(--t-label); line-height: var(--t-label-lh); letter-spacing: var(--t-label-tracking); }
+  .meta { font-size: var(--t-meta); line-height: var(--t-meta-lh); letter-spacing: var(--t-meta-tracking); text-transform: uppercase; color: var(--text-secondary); }
+  .micro { font-size: var(--t-micro); letter-spacing: var(--t-micro-tracking); text-transform: uppercase; color: var(--text-tertiary); }
+  .amber { color: var(--accent); }
+</style>
+</head>
+<body>
+  <div class="grid">
+    <div class="row"><span class="tag">meta / 11 caps</span><span class="meta">Article · The Atlantic</span></div>
+    <div class="row"><span class="tag">label / 12</span><span class="label">#machine-learning &nbsp; #to-read</span></div>
+    <div class="row"><span class="tag">micro / 10 caps</span><span class="micro amber">In 3 days → archive</span></div>
+  </div>
+</body>
+</html>

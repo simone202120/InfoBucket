@@ -1,0 +1,27 @@
+<!-- @dsCard group="Colors" viewport="700x190" name="Brand palette" subtitle="Six named hues — cool ink, slate, paper; olive for action, amber for aging" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="../styles.css" />
+<style>
+  body { margin: 0; font-family: var(--font-ui); background: var(--bg); color: var(--text-primary); }
+  .wrap { padding: 20px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+  .sw { border-radius: var(--r-md); overflow: hidden; border: 1px solid var(--border); }
+  .chip { height: 64px; }
+  .meta { padding: 8px 10px; background: var(--surface); }
+  .name { font-family: var(--font-mono); font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--text-primary); }
+  .hex { font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="sw"><div class="chip" style="background:var(--ink)"></div><div class="meta"><div class="name">Ink</div><div class="hex">#16202B</div></div></div>
+    <div class="sw"><div class="chip" style="background:var(--slate)"></div><div class="meta"><div class="name">Slate</div><div class="hex">#5B6878</div></div></div>
+    <div class="sw"><div class="chip" style="background:var(--paper)"></div><div class="meta"><div class="name">Paper</div><div class="hex">#F1F4F7</div></div></div>
+    <div class="sw"><div class="chip" style="background:var(--olive)"></div><div class="meta"><div class="name">Olive</div><div class="hex">#7CA84F</div></div></div>
+    <div class="sw"><div class="chip" style="background:var(--amber)"></div><div class="meta"><div class="name">Amber</div><div class="hex">#C77D29</div></div></div>
+    <div class="sw"><div class="chip" style="background:var(--mist)"></div><div class="meta"><div class="name">Mist</div><div class="hex">#DCE3EA</div></div></div>
+  </div>
+</body>
+</html>

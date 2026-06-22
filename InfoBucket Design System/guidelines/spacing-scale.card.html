@@ -1,0 +1,22 @@
+<!-- @dsCard group="Spacing" viewport="700x170" name="Spacing scale" subtitle="4pt base · gutter 16 · min touch target 44" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="../styles.css" />
+<style>
+  body { margin: 0; font-family: var(--font-mono); background: var(--bg); color: var(--text-primary); padding: 22px; }
+  .row { display: flex; align-items: center; gap: 14px; margin-bottom: 9px; }
+  .bar { background: var(--primary-soft); border-left: 3px solid var(--primary); height: 16px; }
+  .lab { font-size: 10px; color: var(--text-tertiary); width: 78px; }
+</style>
+</head>
+<body>
+  <div class="row"><span class="lab">2 · space-1</span><div class="bar" style="width:2px"></div></div>
+  <div class="row"><span class="lab">8 · space-3</span><div class="bar" style="width:8px"></div></div>
+  <div class="row"><span class="lab">16 · gutter</span><div class="bar" style="width:16px"></div></div>
+  <div class="row"><span class="lab">24 · space-7</span><div class="bar" style="width:24px"></div></div>
+  <div class="row"><span class="lab">44 · touch</span><div class="bar" style="width:44px"></div></div>
+  <div class="row"><span class="lab">64 · space-12</span><div class="bar" style="width:64px"></div></div>
+</body>
+</html>

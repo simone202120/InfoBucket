@@ -1,0 +1,23 @@
+<!-- @dsCard group="Colors" viewport="700x150" name="Status — item lifecycle" subtitle="Processing · Ready · Saved · Archived · Expiring — the second structural signal" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="../styles.css" />
+<style>
+  body { margin: 0; font-family: var(--font-ui); background: var(--bg); color: var(--text-primary); }
+  .wrap { padding: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+  .badge { display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px 7px 10px; border-radius: var(--r-pill); font-family: var(--font-mono); font-size: 11px; letter-spacing: .05em; text-transform: uppercase; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <span class="badge" style="background:var(--status-processing-soft);color:var(--status-processing)"><span class="dot" style="background:var(--status-processing)"></span>Processing</span>
+    <span class="badge" style="background:var(--status-ready-soft);color:var(--status-ready)"><span class="dot" style="background:var(--status-ready)"></span>Ready</span>
+    <span class="badge" style="background:var(--status-saved-soft);color:var(--status-saved)"><span class="dot" style="background:var(--status-saved)"></span>Saved</span>
+    <span class="badge" style="background:var(--status-archived-soft);color:var(--status-archived)"><span class="dot" style="background:var(--status-archived)"></span>Archived</span>
+    <span class="badge" style="background:var(--status-expiring-soft);color:var(--status-expiring)"><span class="dot" style="background:var(--status-expiring)"></span>Expiring</span>
+  </div>
+</body>
+</html>

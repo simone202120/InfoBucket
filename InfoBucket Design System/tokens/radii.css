@@ -1,0 +1,14 @@
+/* ============================================================================
+   InfoBucket — Radius scale
+   Friendly but composed: cards are generously rounded, controls a touch less,
+   tags & stamps fully or strongly rounded. (Avoids the "zero-radius newspaper"
+   default the brief warns against.)
+   ============================================================================ */
+:root {
+  --r-xs:    6px;     /* tiny chips, inner elements */
+  --r-sm:    10px;    /* inputs, small buttons      */
+  --r-md:    12px;    /* buttons, source stamp      */
+  --r-lg:    16px;    /* cards, sheets              */
+  --r-xl:    22px;    /* large sheets, modals       */
+  --r-pill:  999px;   /* tags, status badges, FAB   */
+}

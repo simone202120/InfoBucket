@@ -1,0 +1,44 @@
+/* ============================================================================
+   InfoBucket — Typography tokens
+   Trio (deliberate, RN-available via @expo-google-fonts):
+     • Bricolage Grotesque — display, titles, bucket names, UI chrome
+     • Newsreader          — the reading hero: item SUMMARIES & long reading
+     • Space Mono          — catalog metadata: source labels, counts, countdowns
+   The summary is the hero of every screen, so the reading face is set generously.
+   ============================================================================ */
+
+:root {
+  /* ---- Families ---------------------------------------------------------- */
+  --font-display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
+  --font-ui:      'Bricolage Grotesque', system-ui, sans-serif;
+  --font-read:    'Newsreader', Georgia, 'Times New Roman', serif;
+  --font-mono:    'Space Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+  /* ---- Weights ----------------------------------------------------------- */
+  --w-regular:  400;  /* @kind other */
+  --w-medium:   500;  /* @kind other */
+  --w-semibold: 600;  /* @kind other */
+  --w-bold:     700;  /* @kind other */
+  --w-extra:    800;  /* @kind other */
+
+  /* ---- Type scale (px, mobile-tuned). role: size / line-height / weight --- */
+  /* Display & titles — Bricolage */
+  --t-display:        32px;   --t-display-lh:    36px;   /* screen hero / empty states */
+  --t-title:          24px;   --t-title-lh:      30px;   /* screen titles, bucket name */
+  --t-heading:        19px;   --t-heading-lh:    25px;   /* card titles, section heads */
+  --t-subheading:     16px;   --t-subheading-lh: 22px;
+
+  /* Reading — Newsreader (the SUMMARY hero) */
+  --t-read-lg:        19px;   --t-read-lg-lh:    29px;   /* detail/review summary */
+  --t-read:           16px;   --t-read-lh:       25px;   /* card summary preview  */
+  --t-read-sm:        15px;   --t-read-sm-lh:    23px;
+
+  /* UI body — Bricolage */
+  --t-body:           15px;   --t-body-lh:       21px;
+  --t-body-sm:        13px;   --t-body-sm-lh:    18px;
+
+  /* Utility / metadata — Space Mono */
+  --t-label:          12px;   --t-label-lh:      16px;   --t-label-tracking: 0.04em;
+  --t-meta:           11px;   --t-meta-lh:       15px;   --t-meta-tracking:  0.06em;  /* UPPERCASE source labels */
+  --t-micro:          10px;   --t-micro-lh:      13px;   --t-micro-tracking: 0.08em;
+}

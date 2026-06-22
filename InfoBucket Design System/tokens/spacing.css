@@ -1,0 +1,21 @@
+/* ============================================================================
+   InfoBucket — Spacing scale (4pt base, mobile-first)
+   ============================================================================ */
+:root {
+  --space-0:   0;
+  --space-1:   2px;
+  --space-2:   4px;
+  --space-3:   8px;
+  --space-4:   12px;
+  --space-5:   16px;   /* default screen gutter */
+  --space-6:   20px;
+  --space-7:   24px;
+  --space-8:   32px;
+  --space-9:   40px;
+  --space-10:  48px;
+  --space-12:  64px;
+
+  --gutter:    16px;   /* screen horizontal padding */
+  --gap-card:  12px;   /* between stacked cards     */
+  --touch-min: 44px;   /* iOS/Android min hit target */
+}

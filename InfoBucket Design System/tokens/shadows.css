@@ -1,0 +1,28 @@
+/* ============================================================================
+   InfoBucket — Elevation / shadow scale
+   Soft, low, cool-tinted. Mobile elevation is restrained; dark mode leans on
+   surface lightness + borders rather than heavy shadow.
+   ============================================================================ */
+:root {
+  --shadow-none: none;
+  --shadow-sm:   0 1px 2px rgba(22, 32, 43, 0.06),
+                 0 1px 1px rgba(22, 32, 43, 0.04);
+  --shadow-md:   0 2px 6px rgba(22, 32, 43, 0.07),
+                 0 1px 2px rgba(22, 32, 43, 0.05);
+  --shadow-lg:   0 8px 24px rgba(22, 32, 43, 0.10),
+                 0 2px 6px rgba(22, 32, 43, 0.06);
+  --shadow-fab:  0 6px 18px rgba(124, 168, 79, 0.34),
+                 0 2px 6px rgba(22, 32, 43, 0.12);
+
+  /* aging glow — only used on the expiring state, very subtle */
+  --shadow-expiring: 0 0 0 1px rgba(199, 125, 41, 0.22);
+}
+
+[data-theme="dark"] {
+  --shadow-sm:   0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-md:   0 2px 8px rgba(0, 0, 0, 0.40);
+  --shadow-lg:   0 10px 28px rgba(0, 0, 0, 0.55);
+  --shadow-fab:  0 6px 20px rgba(0, 0, 0, 0.55),
+                 0 0 0 1px rgba(156, 197, 126, 0.22);
+  --shadow-expiring: 0 0 0 1px rgba(224, 162, 76, 0.30);
+}

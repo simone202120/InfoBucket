@@ -1,0 +1,30 @@
+<!-- @dsCard group="Brand" viewport="700x230" name="Voice & microcopy" subtitle="Active voice, user-side names, sentence case, direction not mood" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="../styles.css" />
+<style>
+  body { margin: 0; font-family: var(--font-ui); background: var(--bg); color: var(--text-primary); padding: 22px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 28px; }
+  .row { display: flex; align-items: baseline; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .yes, .no { font-family: var(--font-mono); font-size: 10px; letter-spacing: .05em; flex: none; width: 22px; }
+  .yes { color: var(--success); }
+  .no { color: var(--danger); }
+  .txt { font-size: 14px; }
+  .no .txt, .row.bad .txt { color: var(--text-tertiary); text-decoration: line-through; }
+</style>
+</head>
+<body>
+  <div class="grid">
+    <div class="row"><span class="yes">DO</span><span class="txt">Save</span></div>
+    <div class="row bad"><span class="no">NO</span><span class="txt">Submit</span></div>
+    <div class="row"><span class="yes">DO</span><span class="txt">All sorted — nothing to review.</span></div>
+    <div class="row bad"><span class="no">NO</span><span class="txt">Your inbox is empty 🎉</span></div>
+    <div class="row"><span class="yes">DO</span><span class="txt">In 3 days this moves to Archive.</span></div>
+    <div class="row bad"><span class="no">NO</span><span class="txt">Hurry! Expiring soon!!</span></div>
+    <div class="row"><span class="yes">DO</span><span class="txt">Couldn't reach that link. Try again.</span></div>
+    <div class="row bad"><span class="no">NO</span><span class="txt">Oops! Something went wrong.</span></div>
+  </div>
+</body>
+</html>

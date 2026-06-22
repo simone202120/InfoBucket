@@ -1,0 +1,74 @@
+/* ============================================================================
+   InfoBucket — Accent themes (user-selectable primary)
+   The PRIMARY group is personalization: each user can pick an accent. STATUS
+   colors stay fixed (they are information). Default accent = Olive (declared in
+   colors.css :root / [data-theme="dark"]).
+
+   Apply by setting data-accent on the SAME element that carries data-theme:
+     <html data-theme="dark" data-accent="cobalt">
+   Available: olive (default) · cobalt · seafoam · blush · tangerine · oxblood
+   ============================================================================ */
+
+/* ---- LIGHT ---------------------------------------------------------------- */
+[data-accent="cobalt"] {
+  --primary: #2D5AD9; --primary-hover: #2A52C6; --primary-press: #2447AB;
+  --primary-soft: #E2E9FB; --primary-soft-2: #C5D4F5; --text-on-primary: #FFFFFF;
+  --focus-ring: #2D5AD9;
+  --shadow-fab: 0 6px 18px rgba(45, 90, 217, 0.32), 0 2px 6px rgba(22, 32, 43, 0.12);
+}
+[data-accent="seafoam"] {
+  --primary: #12A199; --primary-hover: #0F8F88; --primary-press: #0C7B75;
+  --primary-soft: #D7F1EE; --primary-soft-2: #BCE6E1; --text-on-primary: #FFFFFF;
+  --focus-ring: #12A199;
+  --shadow-fab: 0 6px 18px rgba(18, 161, 153, 0.32), 0 2px 6px rgba(22, 32, 43, 0.12);
+}
+[data-accent="blush"] {
+  --primary: #DC6F94; --primary-hover: #D15C84; --primary-press: #BC4E72;
+  --primary-soft: #FBE6EC; --primary-soft-2: #F4CBD9; --text-on-primary: #FFFFFF;
+  --focus-ring: #DC6F94;
+  --shadow-fab: 0 6px 18px rgba(220, 111, 148, 0.32), 0 2px 6px rgba(22, 32, 43, 0.12);
+}
+[data-accent="tangerine"] {
+  --primary: #E5731F; --primary-hover: #D5661A; --primary-press: #BC5915;
+  --primary-soft: #FBE8D6; --primary-soft-2: #F4D2B0; --text-on-primary: #FFFFFF;
+  --focus-ring: #E5731F;
+  --shadow-fab: 0 6px 18px rgba(229, 115, 31, 0.30), 0 2px 6px rgba(22, 32, 43, 0.12);
+}
+[data-accent="oxblood"] {
+  --primary: #8E2E3C; --primary-hover: #7E2734; --primary-press: #6B202B;
+  --primary-soft: #F4E0E2; --primary-soft-2: #E6C2C6; --text-on-primary: #FFFFFF;
+  --focus-ring: #8E2E3C;
+  --shadow-fab: 0 6px 18px rgba(142, 46, 60, 0.30), 0 2px 6px rgba(22, 32, 43, 0.12);
+}
+
+/* ---- DARK (same element must carry both attributes) ----------------------- */
+[data-theme="dark"][data-accent="cobalt"] {
+  --primary: #6E92F2; --primary-hover: #82A2F5; --primary-press: #5E84EC;
+  --primary-soft: #15223E; --primary-soft-2: #1F3052; --text-on-primary: #081026;
+  --focus-ring: #6E92F2;
+  --shadow-fab: 0 6px 20px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(110, 146, 242, 0.22);
+}
+[data-theme="dark"][data-accent="seafoam"] {
+  --primary: #52C6BE; --primary-hover: #6AD0C9; --primary-press: #41B4AC;
+  --primary-soft: #0F302E; --primary-soft-2: #1B4641; --text-on-primary: #052220;
+  --focus-ring: #52C6BE;
+  --shadow-fab: 0 6px 20px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(82, 198, 190, 0.22);
+}
+[data-theme="dark"][data-accent="blush"] {
+  --primary: #EF9CB7; --primary-hover: #F4AEC4; --primary-press: #E588A6;
+  --primary-soft: #371E26; --primary-soft-2: #4E2C39; --text-on-primary: #2A0E16;
+  --focus-ring: #EF9CB7;
+  --shadow-fab: 0 6px 20px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(239, 156, 183, 0.22);
+}
+[data-theme="dark"][data-accent="tangerine"] {
+  --primary: #F19A4E; --primary-hover: #F5A964; --primary-press: #E78A3C;
+  --primary-soft: #341E0E; --primary-soft-2: #4A2C13; --text-on-primary: #2A1606;
+  --focus-ring: #F19A4E;
+  --shadow-fab: 0 6px 20px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(241, 154, 78, 0.22);
+}
+[data-theme="dark"][data-accent="oxblood"] {
+  --primary: #D06672; --primary-hover: #D87A84; --primary-press: #C5535F;
+  --primary-soft: #2E1417; --primary-soft-2: #431D22; --text-on-primary: #200A0C;
+  --focus-ring: #D06672;
+  --shadow-fab: 0 6px 20px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(208, 102, 114, 0.22);
+}

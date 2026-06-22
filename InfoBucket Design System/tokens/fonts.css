@@ -1,0 +1,6 @@
+/* InfoBucket webfonts — Google Fonts.
+   RN/Expo note: load the same families via expo-font / @expo-google-fonts.
+   - Bricolage Grotesque  -> @expo-google-fonts/bricolage-grotesque
+   - Newsreader           -> @expo-google-fonts/newsreader
+   - Space Mono           -> @expo-google-fonts/space-mono                       */
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
