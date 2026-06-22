@@ -1,0 +1,53 @@
+import { createElement, type ReactNode } from 'react';
+import { fireEvent, render } from '@testing-library/react-native';
+import { ThemeProvider } from '@/theme';
+import { ItemCard } from '../ItemCard';
+
+function renderInTheme(node: ReactNode) {
+  return render(createElement(ThemeProvider, null, node));
+}
+
+const SUMMARY = 'The single claim worth keeping, surfaced first.';
+
+describe('ItemCard', () => {
+  it('mostra il summary nello stato ready', () => {
+    const { getByText } = renderInTheme(
+      <ItemCard source="article" status="ready" summary={SUMMARY} />,
+    );
+    expect(getByText(SUMMARY)).toBeTruthy();
+  });
+
+  it('mostra lo skeleton (niente summary) nello stato processing', () => {
+    const { queryByText, getByLabelText } = renderInTheme(
+      <ItemCard source="youtube" status="processing" summary={SUMMARY} />,
+    );
+    expect(queryByText(SUMMARY)).toBeNull();
+    expect(getByLabelText('Loading')).toBeTruthy();
+    expect(queryByText('Summarising · proposing a bucket…')).toBeTruthy();
+  });
+
+  it('nello stato ready mostra la proposta di bucket e accetta al volo', () => {
+    const onAccept = jest.fn();
+    const { getByText, getByLabelText } = renderInTheme(
+      <ItemCard
+        source="article"
+        status="ready"
+        summary={SUMMARY}
+        proposedBucket={{ name: 'Machine learning' }}
+        tags={['ml', 'to-read']}
+        onAccept={onAccept}
+      />,
+    );
+    expect(getByText('Machine learning')).toBeTruthy();
+    expect(getByText('ml')).toBeTruthy();
+    fireEvent.press(getByLabelText('Accept Machine learning'));
+    expect(onAccept).toHaveBeenCalledTimes(1);
+  });
+
+  it('nello stato expiring mostra il countdown ambra', () => {
+    const { getByText } = renderInTheme(
+      <ItemCard source="reel" status="expiring" summary={SUMMARY} daysLeft={3} />,
+    );
+    expect(getByText('In 3 days → Archive')).toBeTruthy();
+  });
+});

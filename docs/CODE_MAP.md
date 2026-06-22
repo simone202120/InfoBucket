@@ -4,9 +4,10 @@ Mappa di moduli, dipendenze e relazioni. Serve a capire **gli impatti di una
 modifica** prima di farla. Aggiornala a ogni cambiamento strutturale (regola
 in `CLAUDE.md` §6).
 
-> Stato: **fondamenta** (Fase 0–1 in corso). Le Edge Functions e il worker sono
-> scaffold strutturati con stub `// TODO Fase 2/6`; lo schema DB e i contratti
-> condivisi (tipi, tema) sono completi.
+> Stato: **Fase 1 completata** (login + aggiungi-via-URL + Inbox, con libreria UI
+> RN del design system). Le Edge Functions e il worker sono scaffold strutturati
+> con stub `// TODO Fase 2/6`; lo schema DB e i contratti condivisi sono completi.
+> La generazione AI (summary/tag/bucket) entra in Fase 2.
 
 ---
 
@@ -35,24 +36,40 @@ Entry: `expo-router` (cartella `app/app/`).
 | File | Ruolo | Dipende da |
 |---|---|---|
 | `app/_layout.tsx` | Root: carica i font, monta `ThemeProvider`, Stack router | `@/theme`, expo-font/router |
-| `app/index.tsx` | Schermata placeholder (→ Inbox in Fase 1) | `@/theme` |
 | `src/types/domain.ts` | **Tipi di dominio** (ItemStatus, SourceType, MediaStage, Item, Bucket). Unica fonte di verità lato client, allineata agli enum SQL | — |
 | `src/theme/tokens.ts` | Valori grezzi del design system (colori light/dark, accenti, type, spacing, radii, shadow). Porting dei `.css` | — |
 | `src/theme/index.ts` | **Adapter del tema**: `ThemeProvider`, `useTheme`, `useThemeControls`, `sourceColor()`. UNICO punto che l'app conosce per lo stile | `tokens.ts`, `types/domain.ts` |
+| `src/theme/icons.tsx` | Icone (wrapper `lucide-react-native`, default coerenti) + `SOURCE_ICON` | `types/domain.ts` |
+| `src/theme/components/*` | **Libreria UI** (RN) del design system: Button, TextField, NoteField, SourceStamp, StatusBadge, Tag, BucketChip, ItemCard, EmptyState, ErrorBanner, AddButton. Stile solo da `useTheme()` | `@/theme`, `icons` |
 | `src/lib/env.ts` | Legge/valida `EXPO_PUBLIC_*` (solo URL + anon key, nessun segreto) | — |
 | `src/lib/supabase.ts` | Client Supabase (anon key + auth, AsyncStorage) | `env.ts` |
 | `src/lib/mappers.ts` | Mapping righe DB snake_case ↔ tipi di dominio camelCase | `types/domain.ts` |
 | `src/lib/source.ts` | Rilevamento `SourceType` da URL + validazione URL (logica pura) | `types/domain.ts` |
 | `src/lib/lifecycle.ts` | Countdown decadenza lato client (giorni all'archivio/cancellazione) | `types/domain.ts` |
-| `src/lib/__tests__/*` | Test Jest delle utility pure | le rispettive |
+| `src/lib/items.ts` | **Repository `items`**: `listInbox`, `addItemByUrl` (valida URL, rileva source) | `supabase`, `mappers`, `source` |
+| `src/features/auth/` | `AuthProvider` + `useAuth` (email/password Supabase, sessione persistita, errori in italiano) | `@/lib/supabase` |
+| `src/features/inbox/useInbox.ts` | Stato Inbox (loading/error/refetch) | `@/lib/items` |
 
-**Regola di dipendenza:** le future schermate (`src/features/*`) importano **solo**
-da `@/theme`, `@/types`, `@/lib`. Mai i token grezzi, mai i nomi delle colonne DB.
+**Schermate (`app/app/`, expo-router file-based):**
+
+| Route | File | Ruolo |
+|---|---|---|
+| `_layout` | `app/_layout.tsx` | Carica font, monta `ThemeProvider`+`AuthProvider`, **auth-gate** (redirect login↔app) |
+| `/login` | `app/login.tsx` | Accesso/registrazione (usa `useAuth`, `Button`, `TextField`, `ErrorBanner`) |
+| `/` (tab) | `app/(tabs)/index.tsx` | **Inbox**: lista `ItemCard`, pull-to-refresh, FAB → /add, stato vuoto/errore |
+| tab | `app/(tabs)/library.tsx`, `search.tsx` | Placeholder (Fase 4+) |
+| `/add` | `app/add.tsx` | Modale **Aggiungi-URL** (usa `addItemByUrl`, `TextField`, `NoteField`) |
+
+**Regola di dipendenza:** le schermate (`app/app/*`, `src/features/*`) importano **solo**
+da `@/theme`(+`/components`,`/icons`), `@/types`, `@/lib`, `@/features`. Mai i token
+grezzi, mai i nomi delle colonne DB.
 
 Impatti tipici:
-- Cambi un colore/spaziatura → `tokens.ts` (l'adapter e le schermate non cambiano).
+- Cambi un colore/spaziatura → `tokens.ts` (adapter, componenti e schermate non cambiano).
+- Cambi un componente UI → `src/theme/components/` (le schermate lo riusano).
 - Cambi un enum di stato → aggiorna **insieme** `types/domain.ts` e la migration SQL.
 - Cambi nomi colonna DB → solo `mappers.ts` (+ migration).
+- Cambi forma query `items` → solo `src/lib/items.ts`.
 
 ## `supabase/` — backend (il cervello)
 
@@ -109,6 +126,8 @@ della riga `items` (`mappers.ts` ↔ schema).
 
 ## Stato dei test
 
-- `app/`: Jest — utility pure (`source`, `lifecycle`). `npm test` → verde.
+- `app/`: Jest — utility pure (`source`, `lifecycle`, `mappers`), repository (`items`),
+  hook (`useInbox`), auth (`AuthContext`), libreria componenti UI, schermata `add`.
+  `npm test` → **69 verdi**, `typecheck` e `lint` puliti.
 - `worker/`: Vitest — `composeRawContent`, parser caption. `npm test` → verde (21).
 - `supabase/functions/`: `deno test` — detection + validazione output modello (da eseguire sul cloud/Deno).
