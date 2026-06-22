@@ -32,6 +32,14 @@ const config: ExpoConfig = {
   experiments: {
     typedRoutes: true,
   },
+  // Identità del progetto EAS (build APK in cloud). Solo riferimenti pubblici,
+  // nessun segreto: le EXPO_PUBLIC_* sono iniettate da EAS al momento della build.
+  owner: 'simon2021',
+  extra: {
+    eas: {
+      projectId: 'abd8c06b-122a-452d-b3bc-af7abcef3215',
+    },
+  },
 };
 
 export default config;
