@@ -33,6 +33,14 @@ export interface Bucket {
   createdAt: string;
 }
 
+/** Bucket arricchito con le statistiche per la Libreria (vista `bucket_overview`). */
+export interface BucketOverview extends Bucket {
+  /** Quanti elementi sono salvati nel bucket. */
+  itemCount: number;
+  /** Tipi di fonte presenti nel bucket (per la "spina" colorata della card). */
+  sources: SourceType[];
+}
+
 /** Elemento catturato. Campi camelCase; il mapping da/verso le colonne snake_case
  *  del DB vive in un solo posto (app/src/lib). */
 export interface Item {

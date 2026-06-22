@@ -2,7 +2,7 @@
  * Mapping centralizzato fra le righe DB (snake_case) e i tipi di dominio (camelCase).
  * Unico punto che conosce i nomi delle colonne: le schermate usano solo i tipi di dominio.
  */
-import type { Bucket, Item } from '../types/domain';
+import type { Bucket, BucketOverview, Item, SourceType } from '../types/domain';
 
 /** Forma grezza di una riga `items` come arriva da Supabase. */
 export interface ItemRow {
@@ -32,6 +32,12 @@ export interface BucketRow {
   name: string;
   description: string | null;
   created_at: string;
+}
+
+/** Riga della vista `bucket_overview`: bucket + statistiche per la Libreria. */
+export interface BucketOverviewRow extends BucketRow {
+  item_count: number;
+  sources: SourceType[] | null;
 }
 
 export function toItem(row: ItemRow): Item {
@@ -64,5 +70,13 @@ export function toBucket(row: BucketRow): Bucket {
     name: row.name,
     description: row.description,
     createdAt: row.created_at,
+  };
+}
+
+export function toBucketOverview(row: BucketOverviewRow): BucketOverview {
+  return {
+    ...toBucket(row),
+    itemCount: row.item_count,
+    sources: row.sources ?? [],
   };
 }
