@@ -99,7 +99,9 @@ describe('processItem', () => {
     expect(updates).toHaveLength(1);
     expect(updates[0]?.media_stage).toBe('error');
     expect(updates[0]?.error).toBe('Video privato');
-    expect(updates[0]?.raw_content).toBeUndefined();
+    // §7.7: la caption recuperata PRIMA del download non va persa (niente
+    // "nessun dato"): resta in raw_content, solo la trascrizione manca.
+    expect(updates[0]?.raw_content).toBe('[Caption] caption\n[Autore] @a');
     // Il testimone passa a generate anche in errore.
     expect(generated).toEqual(['item-1']);
     // Niente file da pulire (download fallito): cleanup chiamato con null.

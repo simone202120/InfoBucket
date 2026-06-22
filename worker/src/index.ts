@@ -172,46 +172,51 @@ export async function processItem(
   deps: ProcessDeps = createProductionDeps(env),
 ): Promise<void> {
   let audio: DownloadedAudio | null = null;
-  try {
-    if (!item.source_url || !isMediaSourceType(item.source_type)) {
-      throw new Error(`item ${item.id}: fonte non gestibile dal worker`);
-    }
 
-    // 1. Caption / metadati leggeri (best-effort, degrada a null).
+  if (!item.source_url || !isMediaSourceType(item.source_type)) {
+    // Fonte non gestibile: nessuna caption da salvare, solo l'errore.
+    const message = `item ${item.id}: fonte non gestibile dal worker`;
+    console.error(`Estrazione media fallita (${message})`);
+    await updateItem(supabase, item.id, { media_stage: 'error', error: message });
+  } else {
+    // 1. Caption / metadati leggeri (best-effort: fetchCaption degrada a EMPTY su
+    //    errore). La recuperiamo PRIMA del download pesante e fuori dal try, così
+    //    sopravvive anche se audio/STT falliscono (degradazione graziosa, §7.7).
     const meta = await deps.fetchCaption(item.source_type, item.source_url);
+    try {
+      // 2-3. Download audio + trascrizione (pesante).
+      audio = await deps.downloadAudio(item.source_url);
+      const transcript = await deps.transcribe(audio.path, env);
 
-    // 2-3. Download audio + trascrizione (pesante).
-    audio = await deps.downloadAudio(item.source_url);
-    const transcript = await deps.transcribe(audio.path, env);
-
-    // 4. Componi e persisti il raw_content etichettato (§7.5).
-    const rawContent = composeRawContent({
-      caption: meta.caption,
-      author: meta.author,
-      transcript,
-    });
-
-    await updateItem(supabase, item.id, {
-      raw_content: rawContent,
-      media_stage: 'done',
-      error: null,
-    });
-  } catch (err) {
-    // §7.7: errore di estrazione → media_stage='error' + messaggio, MA si chiama
-    // comunque generate (caption + nota possono bastare).
-    const message = toSafeErrorMessage(err);
-    // Osservabilità: subito dopo, `generate` azzera `items.error` sul successo
-    // (degradazione graziosa su caption+nota), quindi senza questo log il motivo
-    // del fallimento media — es. "TikTok richiede login" — sparirebbe del tutto,
-    // lasciando solo `media_stage='error'` senza spiegazione.
-    console.error(`Estrazione media fallita (item ${item.id}): ${message}`);
-    await updateItem(supabase, item.id, {
-      media_stage: 'error',
-      error: message,
-    });
-  } finally {
-    // §7.6: pulizia del file temporaneo, sempre.
-    await deps.cleanupAudio(audio);
+      // 4. Successo: raw_content = caption + autore + trascrizione (§7.5).
+      await updateItem(supabase, item.id, {
+        raw_content: composeRawContent({
+          caption: meta.caption,
+          author: meta.author,
+          transcript,
+        }),
+        media_stage: 'done',
+        error: null,
+      });
+    } catch (err) {
+      const message = toSafeErrorMessage(err);
+      console.error(`Estrazione media fallita (item ${item.id}): ${message}`);
+      // §7.7: l'audio è fallito (es. "TikTok richiede login"), ma la caption
+      // recuperata al passo 1 NON va persa: la salviamo lo stesso così `generate`
+      // produce un riassunto vero invece di "nessun dato". Solo la trascrizione
+      // manca; `composeRawContent` omette la sezione vuota.
+      await updateItem(supabase, item.id, {
+        raw_content: composeRawContent({
+          caption: meta.caption,
+          author: meta.author,
+        }),
+        media_stage: 'error',
+        error: message,
+      });
+    } finally {
+      // §7.6: pulizia del file temporaneo, sempre.
+      await deps.cleanupAudio(audio);
+    }
   }
 
   // §7.6/§7.7: passa il testimone a generate in OGNI caso.
