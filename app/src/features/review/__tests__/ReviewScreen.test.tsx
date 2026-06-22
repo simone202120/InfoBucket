@@ -69,17 +69,57 @@ it('mostra il riassunto e i tag dell\'elemento', async () => {
   expect(getByText('cucina')).toBeTruthy();
 });
 
+const bucket = (id: string, name: string) => ({
+  id,
+  name,
+  description: null,
+  createdAt: '2026-06-22T12:00:00Z',
+});
+
 it('accetta il bucket proposto dall\'AI e chiama confirmItem', async () => {
   getItemMock.mockResolvedValue(item());
-  listBucketsMock.mockResolvedValue([{ id: 'b1', name: 'Cucina', description: null, createdAt: '2026-06-22T12:00:00Z' }]);
+  listBucketsMock.mockResolvedValue([bucket('b1', 'Cucina')]);
   confirmItemMock.mockResolvedValue(item({ status: 'saved', bucketId: 'b1' }));
 
-  const { getAllByLabelText } = wrap(<ReviewScreen id="i1" />);
+  const { getByLabelText } = wrap(<ReviewScreen id="i1" />);
 
-  // "Cucina" appare sia come proposta AI sia nella lista dei bucket: prendi la prima.
-  await waitFor(() => expect(getAllByLabelText('Accept Cucina').length).toBeGreaterThan(0));
-  const [accept] = getAllByLabelText('Accept Cucina');
-  fireEvent.press(accept);
+  // Il bucket proposto compare una sola volta: niente doppione lista.
+  await waitFor(() => expect(getByLabelText('Accept Cucina')).toBeTruthy());
+  fireEvent.press(getByLabelText('Accept Cucina'));
 
   await waitFor(() => expect(confirmItemMock).toHaveBeenCalledWith('i1', 'b1'));
+});
+
+it('non ripete il bucket proposto nella lista "scegli"', async () => {
+  getItemMock.mockResolvedValue(item({ suggestedBucketId: 'b1' }));
+  listBucketsMock.mockResolvedValue([bucket('b1', 'Cucina'), bucket('b2', 'Viaggi')]);
+
+  const { getAllByLabelText, getByLabelText } = wrap(<ReviewScreen id="i1" />);
+
+  // La proposta (Cucina) appare una sola volta; gli altri bucket restano scegliibili.
+  await waitFor(() => expect(getByLabelText('Accept Cucina')).toBeTruthy());
+  expect(getAllByLabelText('Accept Cucina')).toHaveLength(1);
+  expect(getByLabelText('Accept Viaggi')).toBeTruthy();
+});
+
+it('toccare un bucket della lista chiama confirmItem con quel bucket', async () => {
+  getItemMock.mockResolvedValue(item({ suggestedBucketId: 'b1' }));
+  listBucketsMock.mockResolvedValue([bucket('b1', 'Cucina'), bucket('b2', 'Viaggi')]);
+  confirmItemMock.mockResolvedValue(item({ status: 'saved', bucketId: 'b2' }));
+
+  const { getByLabelText } = wrap(<ReviewScreen id="i1" />);
+
+  await waitFor(() => expect(getByLabelText('Accept Viaggi')).toBeTruthy());
+  fireEvent.press(getByLabelText('Accept Viaggi'));
+
+  await waitFor(() => expect(confirmItemMock).toHaveBeenCalledWith('i1', 'b2'));
+});
+
+it('mostra il testo guida per salvare in un bucket', async () => {
+  getItemMock.mockResolvedValue(item());
+  listBucketsMock.mockResolvedValue([bucket('b1', 'Cucina')]);
+
+  const { getByText } = wrap(<ReviewScreen id="i1" />);
+
+  await waitFor(() => expect(getByText('Tocca un bucket per salvarci l\'elemento.')).toBeTruthy());
 });

@@ -400,6 +400,10 @@ function ConfirmBucket({ item, buckets, confirming, onConfirm }: ConfirmBucketPr
       ? { name: item.suggestedBucketName, isNew: true, target: { kind: 'new', name: item.suggestedBucketName } as ConfirmTarget }
       : null;
 
+  // La lista "scegli un bucket" non ripete la proposta già mostrata sopra:
+  // se l'AI ha suggerito un bucket esistente, lo escludiamo per id.
+  const otherBuckets = buckets.filter((b) => b.id !== suggestedExisting?.id);
+
   const createNew = () => {
     if (!name.trim()) return;
     void onConfirm({ kind: 'new', name, description });
@@ -407,7 +411,8 @@ function ConfirmBucket({ item, buckets, confirming, onConfirm }: ConfirmBucketPr
 
   return (
     <View style={{ gap: t.space[4] }}>
-      <SectionTitle>Conferma in un bucket</SectionTitle>
+      <SectionTitle>Salva in un bucket</SectionTitle>
+      <Text style={guideStyle(t)}>Tocca un bucket per salvarci l&apos;elemento.</Text>
 
       {suggestion ? (
         <View style={{ gap: t.space[3] }}>
@@ -420,12 +425,12 @@ function ConfirmBucket({ item, buckets, confirming, onConfirm }: ConfirmBucketPr
         </View>
       ) : null}
 
-      {/* Scegli un altro bucket esistente */}
-      {buckets.length > 0 ? (
+      {/* Scegli un altro bucket esistente (escludendo la proposta sopra) */}
+      {otherBuckets.length > 0 ? (
         <View style={{ gap: t.space[3] }}>
-          <Text style={metaStyle(t)}>Oppure scegli un bucket</Text>
+          <Text style={metaStyle(t)}>{suggestion ? 'Oppure scegli un bucket' : 'Scegli un bucket'}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: t.space[3] }}>
-            {buckets.map((bucket) => (
+            {otherBuckets.map((bucket) => (
               <BucketChip
                 key={bucket.id}
                 name={bucket.name}
@@ -528,6 +533,16 @@ function metaStyle(t: Theme) {
     fontSize: t.type.label.size,
     letterSpacing: t.type.label.size * t.type.label.tracking,
     textTransform: 'uppercase' as const,
+    color: t.colors.textSecondary,
+  };
+}
+
+/** Testo guida discorsivo: spiega cosa fa il tap su un bucket. */
+function guideStyle(t: Theme) {
+  return {
+    fontFamily: t.font.display,
+    fontSize: t.type.bodySm.size,
+    lineHeight: t.type.bodySm.lh,
     color: t.colors.textSecondary,
   };
 }
