@@ -30,18 +30,38 @@ Applicate in ordine numerico (`supabase db push`, oppure dal dashboard SQL):
    `SECURITY INVOKER`, solo `saved`/`archived`. Spec §11.
 4. `0004_cron.sql` — job pg_cron: ready>7gg → archived; archived>20gg → delete;
    sweep media `processing` bloccati → pending. Spec §10.
+5. `0005_dispatch_trigger.sql` — innesco automatico: trigger su INSERT di `items`
+   (status='processing') → chiama la Edge Function `dispatch` via `pg_net`; più uno
+   sweep pg_cron (ogni 2 min) che ridispaccia gli item `processing` non instradati.
+   Spec §6 ("Innesco"). I segreti (URL funzioni + service key) si leggono dal Vault
+   (vedi "Innesco della pipeline" sotto).
 
 ⚠️ **pg_cron va abilitato dal dashboard** (Database > Extensions > pg_cron)
-PRIMA di applicare `0004_cron.sql`.
+PRIMA di applicare `0004_cron.sql`. Per `0005` servono anche **pg_net** e **vault**
+(Database > Extensions), entrambi disponibili sui progetti Supabase.
 
 Gli enum SQL sono allineati a `app/src/types/domain.ts` (unica fonte di verità
 dei tipi di dominio).
 
 ## Edge Functions
 
-Scaffold Fase 2 (spec §16). `dispatch` instrada per tipo; `generate` è il cuore
-AI condiviso. La logica pura (rilevamento `source_type`, validazione dell'output
-del modello) sta in `functions/_shared/` ed è testata.
+Fase 2 (spec §16). `dispatch` instrada per tipo ed estrae il `raw_content` inline
+per il percorso leggero (articolo via readability+linkedom con fallback a strip
+HTML; documento PDF via unpdf e testo semplice; YouTube via transcript pubblico
+timedtext), poi chiama `generate`. Le fonti media (reel/tiktok/youtube senza
+transcript) vanno in coda (`media_stage='pending'`) per il worker.
+
+`generate` è il cuore AI condiviso: prompt (raw_content + note + bucket) →
+OpenRouter, validazione dell'output non fidato (`parseModelOutput`), embedding
+OpenAI `text-embedding-3-small`, aggiornamento dell'item a `ready`. È idempotente
+e riusabile per la **rigenerazione** (§6.3): rigira sui dati già salvati senza
+riscaricare la fonte.
+
+La logica pura sta in `functions/_shared/` ed è testata: `source-type`,
+`model-output`, `text` (normalizzazione/troncamento/html→testo), `extract-article`,
+`extract-document`, `youtube-transcript`, `ai` (prompt/embedding input),
+`fetch-remote` (fetch difensivo con fetcher iniettabile). Le chiamate di rete sono
+mockate nei test (nessuna chiamata reale).
 
 ```bash
 # Test delle funzioni pure (Deno):
@@ -71,8 +91,37 @@ supabase secrets set --env-file .env
 | `SUPABASE_URL` | accesso al DB (auto-iniettata nelle Edge Functions) |
 | `SUPABASE_SERVICE_ROLE_KEY` | scritture lato server (auto-iniettata; mai nel client) |
 
-## Innesco della pipeline (Fase 2+)
+## Innesco della pipeline (Fase 2)
 
-Spec §6: Database Webhook su `INSERT` di `items` → `dispatch`. In più uno sweep
-pg_cron raccoglie gli item `processing` non instradati (rete di sicurezza).
+Spec §6: un nuovo `item` con `status='processing'` deve far partire `dispatch`.
+Realizzato in `0005_dispatch_trigger.sql` con un trigger DB + `pg_net`
+(`net.http_post`), invece del Database Webhook del dashboard, così l'innesco è
+versionato nel repo. Uno sweep pg_cron (ogni 2 min) ridispaccia gli item
+`processing` non instradati (rete di sicurezza per le chiamate perse).
+
+La `service_role` **non è hardcodata** in SQL: il trigger la legge dal **Supabase
+Vault**. Configura una tantum i due segreti dal SQL editor del dashboard (ruolo
+privilegiato), DOPO aver applicato le migration:
+
+```sql
+-- URL base delle Edge Functions del progetto (senza slash finale).
+select vault.create_secret(
+  'https://<project-ref>.supabase.co/functions/v1',
+  'project_functions_url');
+
+-- Service role key (la stessa dei secrets delle Edge Functions; mai nel client).
+select vault.create_secret('<SERVICE_ROLE_KEY>', 'service_role_key');
+```
+
+Per ruotare un segreto:
+
+```sql
+select vault.update_secret(
+  (select id from vault.secrets where name = 'service_role_key'),
+  '<NUOVA_KEY>');
+```
+
+Se i segreti mancano, il trigger non rompe l'INSERT: registra un `warning` e
+l'item resta `processing` finché lo sweep non riesce a instradarlo. Prerequisiti:
+estensioni **pg_net** e **vault** abilitate (Database > Extensions).
 ```
