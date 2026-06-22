@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { processItem, type ProcessDeps } from './index.ts';
 import type { WorkerEnv } from './env.ts';
@@ -92,6 +92,7 @@ describe('processItem', () => {
     const { deps, cleaned, generated } = makeDeps({
       downloadAudio: () => Promise.reject(new Error('Video privato')),
     });
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     await processItem(client, env, item, deps);
 
@@ -103,6 +104,11 @@ describe('processItem', () => {
     expect(generated).toEqual(['item-1']);
     // Niente file da pulire (download fallito): cleanup chiamato con null.
     expect(cleaned).toEqual([]);
+    // Osservabilità: il motivo del fallimento è loggato (generate azzera error).
+    expect(logged).toHaveBeenCalledWith(
+      expect.stringContaining('Video privato'),
+    );
+    logged.mockRestore();
   });
 
   it('errore STT dopo download: pulisce l\'audio e chiama generate', async () => {
@@ -110,12 +116,14 @@ describe('processItem', () => {
     const { deps, cleaned, generated } = makeDeps({
       transcribe: () => Promise.reject(new Error('trascrizione fallita (HTTP 500)')),
     });
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     await processItem(client, env, item, deps);
 
     expect(updates[0]?.media_stage).toBe('error');
     expect(cleaned).toEqual([audio]); // l'audio scaricato va comunque pulito
     expect(generated).toEqual(['item-1']);
+    logged.mockRestore();
   });
 
   it('fonte non gestibile (source_url null): error + generate, niente download', async () => {
@@ -127,6 +135,7 @@ describe('processItem', () => {
         return Promise.resolve(audio);
       },
     });
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     await processItem(
       client,
@@ -138,5 +147,6 @@ describe('processItem', () => {
     expect(downloaded).toBe(false);
     expect(updates[0]?.media_stage).toBe('error');
     expect(generated).toEqual(['item-1']);
+    logged.mockRestore();
   });
 });

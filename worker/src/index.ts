@@ -175,9 +175,15 @@ export async function processItem(
   } catch (err) {
     // §7.7: errore di estrazione → media_stage='error' + messaggio, MA si chiama
     // comunque generate (caption + nota possono bastare).
+    const message = toSafeErrorMessage(err);
+    // Osservabilità: subito dopo, `generate` azzera `items.error` sul successo
+    // (degradazione graziosa su caption+nota), quindi senza questo log il motivo
+    // del fallimento media — es. "TikTok richiede login" — sparirebbe del tutto,
+    // lasciando solo `media_stage='error'` senza spiegazione.
+    console.error(`Estrazione media fallita (item ${item.id}): ${message}`);
     await updateItem(supabase, item.id, {
       media_stage: 'error',
-      error: toSafeErrorMessage(err),
+      error: message,
     });
   } finally {
     // §7.6: pulizia del file temporaneo, sempre.
