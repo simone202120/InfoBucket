@@ -8,6 +8,7 @@ export { StatusBadge, type StatusBadgeProps, type BadgeStatus } from './StatusBa
 export { Tag, type TagProps } from './Tag';
 export { BucketChip, type BucketChipProps } from './BucketChip';
 export { ItemCard, type ItemCardProps, type ProposedBucket } from './ItemCard';
+export { BucketCard, type BucketCardProps } from './BucketCard';
 export { TextField, type TextFieldProps } from './TextField';
 export { NoteField, type NoteFieldProps } from './NoteField';
 export { EmptyState, type EmptyStateProps } from './EmptyState';
