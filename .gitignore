@@ -50,3 +50,6 @@ Thumbs.db
 # Test / coverage
 coverage/
 .nyc_output/
+
+# Visual brainstorming companion (local mockups, not versioned)
+.superpowers/
