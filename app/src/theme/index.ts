@@ -120,3 +120,4 @@ export function useThemeControls(): Omit<ThemeController, 'theme'> {
 export { accents } from './tokens';
 export type { AccentName, ThemeMode } from './tokens';
 export { FadeInUp, PressableScale, useReducedMotion, staggerDelay, MOTION } from './motion';
+export { ToastProvider, useToast } from './ToastProvider';
