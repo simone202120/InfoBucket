@@ -33,17 +33,13 @@ import {
   StatusBadge,
   Tag,
   TextField,
+  TranscriptSheet,
 } from '@/theme/components';
 import { LinkIcon, PlusIcon, RefreshIcon, TrashIcon } from '@/theme/icons';
 import type { BadgeStatus } from '@/theme/components';
-import type { Item, SourceType } from '@/types/domain';
+import type { Item } from '@/types/domain';
 import { useItemDetail, type ConfirmTarget } from './useItemDetail';
 
-/** Tipi di fonte per cui ha senso mostrare l'anteprima della trascrizione. */
-const TRANSCRIBED_SOURCES: ReadonlySet<SourceType> = new Set<SourceType>(['youtube', 'reel', 'tiktok']);
-
-/** Numero di caratteri di trascrizione mostrati in anteprima. */
-const TRANSCRIPT_PREVIEW_CHARS = 600;
 
 export interface ReviewScreenProps {
   id: string;
@@ -195,6 +191,8 @@ function ReviewBody({
   const [note, setNote] = useState(item.note ?? '');
   const [tags, setTags] = useState<string[]>(item.tags);
   const [newTag, setNewTag] = useState('');
+  // Apertura dello sheet con testo/trascrizione completa.
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   useEffect(() => {
     setSummary(item.summary ?? '');
@@ -239,7 +237,10 @@ function ReviewBody({
     );
   };
 
-  const transcript = transcriptPreview(item);
+  const raw = item.rawContent?.trim() ?? '';
+  const hasText = raw.length > 0;
+  const isAv = item.sourceType === 'youtube' || item.sourceType === 'reel' || item.sourceType === 'tiktok';
+  const textLabel = isAv ? 'trascrizione' : 'testo';
 
   return (
     <KeyboardAvoidingView
@@ -369,7 +370,15 @@ function ReviewBody({
           </Button>
         </View>
 
-        {transcript ? <TranscriptPreview text={transcript} /> : null}
+        {hasText ? (
+          <Button
+            variant="secondary"
+            onPress={() => setSheetOpen(true)}
+            accessibilityLabel={`Apri ${textLabel}`}
+          >
+            {isAv ? 'Apri trascrizione' : 'Apri testo'}
+          </Button>
+        ) : null}
 
         {/* Conferma in un bucket */}
         <ConfirmBucket item={item} buckets={buckets} confirming={confirming} onConfirm={onConfirm} />
@@ -385,6 +394,13 @@ function ReviewBody({
           Elimina
         </Button>
       </ScrollView>
+
+      <TranscriptSheet
+        visible={sheetOpen}
+        title={isAv ? 'Trascrizione' : 'Testo'}
+        text={raw}
+        onClose={() => setSheetOpen(false)}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -487,32 +503,6 @@ function ConfirmBucket({ item, buckets, confirming, onConfirm }: ConfirmBucketPr
   );
 }
 
-function TranscriptPreview({ text }: { text: string }): JSX.Element {
-  const t = useTheme();
-  return (
-    <View style={{ gap: t.space[3] }}>
-      <SectionTitle>Trascrizione</SectionTitle>
-      <View
-        style={{
-          backgroundColor: t.colors.bgSunken,
-          borderRadius: t.radius.sm,
-          padding: t.space[4],
-        }}
-      >
-        <Text
-          style={{
-            fontFamily: t.font.read,
-            fontSize: t.type.readSm.size,
-            lineHeight: t.type.readSm.lh,
-            color: t.colors.textSecondary,
-          }}
-        >
-          {text}
-        </Text>
-      </View>
-    </View>
-  );
-}
 
 function Field({ label, children }: { label: string; children: React.ReactNode }): JSX.Element {
   const t = useTheme();
@@ -571,13 +561,6 @@ function badgeStatus(status: Item['status']): BadgeStatus {
   return status;
 }
 
-/** Anteprima della trascrizione per reel/video, se il raw_content è presente. */
-function transcriptPreview(item: Item): string | null {
-  if (!TRANSCRIBED_SOURCES.has(item.sourceType)) return null;
-  const raw = item.rawContent?.trim();
-  if (!raw) return null;
-  return raw.length > TRANSCRIPT_PREVIEW_CHARS ? `${raw.slice(0, TRANSCRIPT_PREVIEW_CHARS)}…` : raw;
-}
 
 /** Due liste di tag sono uguali se hanno gli stessi elementi nello stesso ordine. */
 function sameTags(a: readonly string[], b: readonly string[]): boolean {
