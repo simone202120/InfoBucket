@@ -1,12 +1,12 @@
 import { useRouter } from 'expo-router';
-import { ActivityIndicator, FlatList, Text, View } from 'react-native';
+import { FlatList, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/features/auth';
 import { useSearch } from '@/features/search/useSearch';
 import { daysLeft, isExpiring } from '@/lib/lifecycle';
 import { hostnameOf } from '@/lib/source';
 import { useTheme } from '@/theme';
-import { AvatarMenu, EmptyState, ErrorBanner, ItemCard, TextField } from '@/theme/components';
+import { AvatarMenu, EmptyState, ErrorBanner, ItemCard, ListSkeleton, TextField } from '@/theme/components';
 import { SearchIcon } from '@/theme/icons';
 import type { Item } from '@/types/domain';
 
@@ -47,9 +47,9 @@ export default function SearchScreen() {
         </View>
       ) : null}
 
-      {loading ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator color={t.colors.primary} />
+      {loading && results.length === 0 ? (
+        <View style={{ padding: t.gutter }}>
+          <ListSkeleton />
         </View>
       ) : (
         <FlatList

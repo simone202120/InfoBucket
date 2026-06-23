@@ -1,7 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   KeyboardAvoidingView,
   Modal,
@@ -23,6 +22,7 @@ import {
   Button,
   EmptyState,
   ErrorBanner,
+  ListSkeleton,
   NoteField,
   TextField,
 } from '@/theme/components';
@@ -67,8 +67,8 @@ export default function LibraryScreen() {
       ) : null}
 
       {loading && buckets.length === 0 ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator color={t.colors.primary} />
+        <View style={{ padding: t.gutter }}>
+          <ListSkeleton />
         </View>
       ) : (
         <FlatList

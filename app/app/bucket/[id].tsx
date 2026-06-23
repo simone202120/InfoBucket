@@ -1,11 +1,11 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusRefetch } from '@/features/useFocusRefetch';
 import { useBucketDetail } from '@/features/library/useBucketDetail';
 import { hostnameOf } from '@/lib/source';
 import { FadeInUp, staggerDelay, useTheme } from '@/theme';
-import { EmptyState, ErrorBanner, ItemCard } from '@/theme/components';
+import { EmptyState, ErrorBanner, ItemCard, ListSkeleton } from '@/theme/components';
 import { LibraryIcon, XIcon } from '@/theme/icons';
 import type { Item } from '@/types/domain';
 
@@ -38,8 +38,8 @@ export default function BucketDetailScreen() {
       ) : null}
 
       {loading && items.length === 0 ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator color={t.colors.primary} />
+        <View style={{ padding: t.gutter }}>
+          <ListSkeleton />
         </View>
       ) : (
         <FlatList
