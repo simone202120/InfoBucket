@@ -7,6 +7,7 @@ import type { ExpoConfig } from 'expo/config';
 const config: ExpoConfig = {
   name: 'InfoBucket',
   slug: 'infobucket',
+  owner: 'simon2021',
   version: '0.1.0',
   orientation: 'portrait',
   scheme: 'infobucket',
@@ -34,6 +35,13 @@ const config: ExpoConfig = {
   ],
   experiments: {
     typedRoutes: true,
+  },
+  // Collega il progetto a EAS (necessario per il "Build from GitHub", che gira
+  // non-interattivo). Nessun segreto: il projectId è un identificatore pubblico.
+  extra: {
+    eas: {
+      projectId: 'abd8c06b-122a-452d-b3bc-af7abcef3215',
+    },
   },
 };
 
