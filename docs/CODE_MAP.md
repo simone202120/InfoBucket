@@ -42,7 +42,8 @@ Entry: `expo-router` (cartella `app/app/`).
 | `src/theme/tokens.ts` | Valori grezzi del design system (colori light/dark, accenti, type, spacing, radii, shadow). Porting dei `.css` | — |
 | `src/theme/index.ts` | **Adapter del tema**: `ThemeProvider`, `useTheme`, `useThemeControls`, `sourceColor()`. UNICO punto che l'app conosce per lo stile | `tokens.ts`, `types/domain.ts` |
 | `src/theme/icons.tsx` | Icone (wrapper `lucide-react-native`, default coerenti) + `SOURCE_ICON` | `types/domain.ts` |
-| `src/theme/components/*` | **Libreria UI** (RN) del design system: Button, TextField, NoteField, SourceStamp, StatusBadge, Tag, BucketChip, ItemCard, EmptyState, ErrorBanner, AddButton. Stile solo da `useTheme()` | `@/theme`, `icons` |
+| `src/theme/components/*` | **Libreria UI** (RN) del design system: Button, TextField, NoteField, SourceStamp, StatusBadge, Tag, BucketChip, **BucketCard**, ItemCard, EmptyState, ErrorBanner, AddButton, **TabBar** (barra galleggiante con pill attiva che si espande). Stile solo da `useTheme()` | `@/theme`, `icons` |
+| `src/theme/motion.tsx` | Primitive di animazione sobrie (`FadeInUp`, `PressableScale`, `staggerDelay`, `useReducedMotion`), rispettano "riduci movimento". Esposte da `@/theme` | `@/theme` |
 | `src/lib/env.ts` | Legge/valida `EXPO_PUBLIC_*` (solo URL + anon key, nessun segreto) | — |
 | `src/lib/supabase.ts` | Client Supabase (anon key + auth, AsyncStorage) | `env.ts` |
 | `src/lib/mappers.ts` | Mapping righe DB snake_case ↔ tipi di dominio camelCase | `types/domain.ts` |
@@ -57,16 +58,22 @@ Entry: `expo-router` (cartella `app/app/`).
 | `src/features/review/useItemDetail.ts` | Stato dettaglio/review di un item: caricamento, conferma in bucket, modifica, rigenera, elimina | `@/lib/items`, `@/lib/buckets` |
 | `src/features/review/ReviewScreen.tsx` | UI di review: summary eroe, tag, scelta bucket, azioni (conferma/rigenera/elimina) | `useItemDetail`, `@/theme` |
 | `src/features/search/useSearch.ts` | Stato ricerca: query con debounce, fusione risultati, loading/error | `@/lib/items` |
+| `src/features/library/useLibrary.ts` | Stato Libreria: bucket con statistiche | `@/lib/buckets` |
+| `src/features/library/useBucketDetail.ts` | Stato dettaglio bucket: testata + item del bucket | `@/lib/buckets`, `@/lib/items` |
+| `src/features/settings/useBucketAdmin.ts` | Gestione bucket dalle Impostazioni: carica, rinomina, elimina | `@/lib/buckets` |
 
 **Schermate (`app/app/`, expo-router file-based):**
 
 | Route | File | Ruolo |
 |---|---|---|
-| `_layout` | `app/_layout.tsx` | Carica font, monta `ThemeProvider`+`AuthProvider`+`ShareIntentProvider`, **auth-gate** (redirect login↔app) e **share intent**: a link condiviso → apre /add precompilato (`extractFirstUrl`) |
+| `_layout` | `app/_layout.tsx` | Carica font, monta `ThemeProvider`+`AuthProvider`+`ShareIntentProvider`, **auth-gate** (redirect login↔app) e **share intent**: a link condiviso → apre /add precompilato (`extractFirstUrl`). Registra le route (incl. `bucket/[id]`, `settings` modale) |
+| `(tabs)/_layout` | `app/(tabs)/_layout.tsx` | Monta il **`TabBar` del design system** (Inbox·Libreria·Cerca) adattando lo stato di expo-router (rotta↔tab) + **AddButton "+" flottante GLOBALE** sopra la barra |
 | `/login` | `app/login.tsx` | Accesso/registrazione (usa `useAuth`, `Button`, `TextField`, `ErrorBanner`) |
-| `/` (tab) | `app/(tabs)/index.tsx` | **Inbox**: lista `ItemCard`, pull-to-refresh, FAB → /add, stato vuoto/errore |
+| `/` (tab) | `app/(tabs)/index.tsx` | **Inbox**: lista `ItemCard` (comparsa staggered), pull-to-refresh, header con Archivio + **Impostazioni**, stato vuoto/errore |
 | `/search` (tab) | `app/(tabs)/search.tsx` | **Ricerca** ibrida (semantica + keyword) su saved/archived via `useSearch` → Edge Function `search` |
-| `/library` (tab) | `app/(tabs)/library.tsx` | Placeholder Libreria (bucket in una fase successiva) |
+| `/library` (tab) | `app/(tabs)/library.tsx` | **Libreria**: griglia di `BucketCard` (`useLibrary`), "Nuovo bucket", tap → dettaglio bucket |
+| `/bucket/[id]` | `app/bucket/[id].tsx` | **Dettaglio bucket** (`useBucketDetail`): elementi salvati, tap → review |
+| `/settings` | `app/settings.tsx` | **Impostazioni** (modale): account/logout, aspetto (accento+tema), gestione bucket, ciclo di vita |
 | `/add` | `app/add.tsx` | Modale **Aggiungi-URL** (usa `addItemByUrl`, `TextField`, `NoteField`) |
 | `/item/[id]` | `app/item/[id].tsx` | **Review/dettaglio** item (monta `ReviewScreen`): legge `id` dall'URL |
 | `/archive` | `app/archive.tsx` | **Archivio**: item decaduti, recuperabili salvandoli in un bucket (§10) |
@@ -101,6 +108,7 @@ directory su EAS va impostata a `app`.
 | `migrations/0003_search.sql` | RPC `search_items()` — ricerca ibrida (semantica + full-text) con fusione RRF, `SECURITY INVOKER` |
 | `migrations/0004_cron.sql` | Job pg_cron: ready>7gg→archived, archived>20gg→delete, sweep claim media bloccati |
 | `migrations/0005_dispatch_trigger.sql` | Innesco automatico: trigger AFTER INSERT su `items` (`status='processing'`) → chiama `dispatch` via `pg_net`; sweep pg_cron (2 min) ridispaccia gli item non instradati. Service role letta dal **Vault** (`project_functions_url`, `service_role_key`), non hardcodata |
+| `migrations/0006_buckets_dedup.sql` | Deduplica i bucket (fonde i doppioni sul più vecchio), indice unico `(user_id, lower(name))`, vista `bucket_overview` (conteggio + fonti, `security_invoker`) per la Libreria |
 | `functions/_shared/source-type.ts` | Rilevamento `source_type` (autorevole, lato server) — gemello puro di `app/src/lib/source.ts` |
 | `functions/_shared/caption.ts` | Estrazione caption tiktok/reel (oEmbed/Open Graph) + `composeCaptionRawContent` — gemello puro di `worker/src/extract/caption.ts`. Dà il riassunto da didascalia senza worker né login |
 | `functions/_shared/model-output.ts` | Parsing/validazione dell'output JSON del modello (input **non fidato**) |
@@ -160,7 +168,8 @@ della riga `items` (`mappers.ts` ↔ schema).
 - `app/`: Jest — utility pure (`source`, `lifecycle`, `mappers`), repository (`items`,
   `items-mutations`, `buckets`), hook (`useInbox`, `useArchive`, `useSearch`,
   `useItemDetail`), auth (`AuthContext`), `ReviewScreen`, libreria componenti UI,
-  schermata `add`. `npm test` → **95 verdi** (23 suite), `typecheck` e `lint` puliti.
+  schermata `add`, Libreria/dettaglio bucket, Impostazioni, BucketCard, motion.
+  `npm test` → **120 verdi** (28 suite), `typecheck` e `lint` puliti.
 - `worker/`: Vitest — `composeRawContent`, parser caption, estrazione media
   (`media`, inclusi i cookie yt-dlp), validazione env (`env`), loop di polling
   (`index`). `npm test` → **57 verdi** (5 file).

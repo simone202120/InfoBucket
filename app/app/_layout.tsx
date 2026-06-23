@@ -76,7 +76,9 @@ function RootNavigator() {
       <Stack.Screen name="login" />
       <Stack.Screen name="add" options={{ presentation: 'modal' }} />
       <Stack.Screen name="item/[id]" />
+      <Stack.Screen name="bucket/[id]" />
       <Stack.Screen name="archive" />
+      <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
     </Stack>
   );
 }

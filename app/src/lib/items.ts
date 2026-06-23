@@ -38,6 +38,17 @@ export async function listArchived(): Promise<Item[]> {
   return (data as ItemRow[]).map(toItem);
 }
 
+/** Elementi salvati in un bucket, dal più recente confermato (dettaglio bucket, §4). */
+export async function listBucketItems(bucketId: string): Promise<Item[]> {
+  const { data, error } = await supabase
+    .from('items')
+    .select('*')
+    .eq('bucket_id', bucketId)
+    .order('confirmed_at', { ascending: false, nullsFirst: false });
+  if (error) throw new ItemsError('Impossibile caricare gli elementi del bucket.');
+  return (data as ItemRow[]).map(toItem);
+}
+
 export interface AddItemInput {
   url: string;
   note?: string | null;
