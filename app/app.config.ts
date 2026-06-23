@@ -7,6 +7,7 @@ import type { ExpoConfig } from 'expo/config';
 const config: ExpoConfig = {
   name: 'InfoBucket',
   slug: 'infobucket',
+  owner: 'simon2021',
   version: '0.1.0',
   orientation: 'portrait',
   scheme: 'infobucket',
@@ -28,13 +29,15 @@ const config: ExpoConfig = {
     // Share intent Android (§12): riceve link/testo condivisi da altre app.
     // Richiede una dev/production build EAS (non funziona in Expo Go).
     ['expo-share-intent', { androidIntentFilters: ['text/*'] }],
+    // Limita il build nativo ad arm64-v8a: con le 4 ABI di default il worker EAS
+    // andava in out-of-memory durante la compilazione C++ (vedi il plugin).
+    './plugins/withAndroidReleaseTuning',
   ],
   experiments: {
     typedRoutes: true,
   },
-  // Identità del progetto EAS (build APK in cloud). Solo riferimenti pubblici,
-  // nessun segreto: le EXPO_PUBLIC_* sono iniettate da EAS al momento della build.
-  owner: 'simon2021',
+  // Collega il progetto a EAS (necessario per il "Build from GitHub", che gira
+  // non-interattivo). Nessun segreto: il projectId è un identificatore pubblico.
   extra: {
     eas: {
       projectId: 'abd8c06b-122a-452d-b3bc-af7abcef3215',
