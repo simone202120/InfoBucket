@@ -82,6 +82,12 @@ Impatti tipici:
 - Cambi nomi colonna DB → solo `mappers.ts` (+ migration).
 - Cambi forma query `items` → solo `src/lib/items.ts`.
 
+**Config nativo (EAS):** `app.config.ts` definisce app + plugin. `plugins/withAndroidReleaseTuning.js`
+è un config plugin locale che limita `reactNativeArchitectures` a `arm64-v8a` in
+`gradle.properties` (EAS rigenera `android/` a ogni build, quindi va fatto via plugin,
+non a mano): le 4 ABI di default facevano andare in OOM il worker durante la
+compilazione C++. Cambi sulle ABI/proprietà Gradle → solo questo plugin.
+
 ## `supabase/` — backend (il cervello)
 
 | File | Ruolo |
