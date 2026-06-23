@@ -143,6 +143,6 @@ it('mostra un toast e torna indietro dopo la conferma in un bucket', async () =>
   await waitFor(() => expect(getByLabelText('Accept Cucina')).toBeTruthy());
   fireEvent.press(getByLabelText('Accept Cucina'));
 
-  await waitFor(() => expect(mockBack).toHaveBeenCalled());
-  expect(getByText('Salvato in «Cucina»')).toBeTruthy();
+  await waitFor(() => expect(getByText('Salvato in «Cucina»')).toBeTruthy());
+  expect(mockBack).toHaveBeenCalled();
 });
