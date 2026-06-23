@@ -40,7 +40,6 @@ import type { BadgeStatus } from '@/theme/components';
 import type { Item } from '@/types/domain';
 import { useItemDetail, type ConfirmTarget } from './useItemDetail';
 
-
 export interface ReviewScreenProps {
   id: string;
 }
@@ -395,12 +394,14 @@ function ReviewBody({
         </Button>
       </ScrollView>
 
-      <TranscriptSheet
-        visible={sheetOpen}
-        title={isAv ? 'Trascrizione' : 'Testo'}
-        text={raw}
-        onClose={() => setSheetOpen(false)}
-      />
+      {hasText && (
+        <TranscriptSheet
+          visible={sheetOpen}
+          title={isAv ? 'Trascrizione' : 'Testo'}
+          text={raw}
+          onClose={() => setSheetOpen(false)}
+        />
+      )}
     </KeyboardAvoidingView>
   );
 }
@@ -503,7 +504,6 @@ function ConfirmBucket({ item, buckets, confirming, onConfirm }: ConfirmBucketPr
   );
 }
 
-
 function Field({ label, children }: { label: string; children: React.ReactNode }): JSX.Element {
   const t = useTheme();
   return (
@@ -560,7 +560,6 @@ function sourceName(item: Item): string | undefined {
 function badgeStatus(status: Item['status']): BadgeStatus {
   return status;
 }
-
 
 /** Due liste di tag sono uguali se hanno gli stessi elementi nello stesso ordine. */
 function sameTags(a: readonly string[], b: readonly string[]): boolean {

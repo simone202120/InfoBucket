@@ -12,3 +12,11 @@ it('mostra titolo e testo quando visibile', () => {
   expect(getByText('Trascrizione')).toBeTruthy();
   expect(getByText('Testo completo qui.')).toBeTruthy();
 });
+
+it('non rende il contenuto quando non visibile', () => {
+  const { queryByText } = wrap(
+    <TranscriptSheet visible={false} title="Trascrizione" text="Testo completo qui." onClose={() => {}} />,
+  );
+  expect(queryByText('Trascrizione')).toBeNull();
+  expect(queryByText('Testo completo qui.')).toBeNull();
+});

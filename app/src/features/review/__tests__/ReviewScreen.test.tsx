@@ -74,7 +74,7 @@ it('mostra il riassunto e i tag dell\'elemento', async () => {
 
   const { getByDisplayValue, getByText } = wrap(<ReviewScreen id="i1" />);
 
-  await waitFor(() => expect(getByDisplayValue('Un riassunto leggibile')).toBeTruthy(), { timeout: 3000 });
+  await waitFor(() => expect(getByDisplayValue('Un riassunto leggibile')).toBeTruthy());
   expect(getByText('cucina')).toBeTruthy();
 });
 
