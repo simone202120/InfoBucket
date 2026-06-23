@@ -23,7 +23,7 @@ export function AddButton({ onPress, label, style }: AddButtonProps): JSX.Elemen
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={label ?? 'Add'}
+      accessibilityLabel={label ?? 'Aggiungi'}
       onPress={onPress}
       onPressIn={() => setPressed(true)}
       onPressOut={() => setPressed(false)}

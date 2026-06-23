@@ -23,7 +23,7 @@ describe('ItemCard', () => {
     );
     expect(queryByText(SUMMARY)).toBeNull();
     expect(getByLabelText('Loading')).toBeTruthy();
-    expect(queryByText('Summarising · proposing a bucket…')).toBeTruthy();
+    expect(queryByText('Riassumo · propongo un bucket…')).toBeTruthy();
   });
 
   it('nello stato ready mostra la proposta di bucket e accetta al volo', () => {
@@ -44,10 +44,10 @@ describe('ItemCard', () => {
     expect(onAccept).toHaveBeenCalledTimes(1);
   });
 
-  it('nello stato expiring mostra il countdown ambra', () => {
-    const { getByText } = renderInTheme(
+  it('nello stato expiring mostra il countdown nel badge una sola volta', () => {
+    const { getAllByText } = renderInTheme(
       <ItemCard source="reel" status="expiring" summary={SUMMARY} daysLeft={3} />,
     );
-    expect(getByText('In 3 days → Archive')).toBeTruthy();
+    expect(getAllByText('Tra 3 giorni').length).toBe(1);
   });
 });

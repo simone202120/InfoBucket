@@ -7,7 +7,6 @@
  */
 import { StyleSheet, Text, Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useTheme, type Theme } from '@/theme';
-import { ClockIcon } from '@/theme/icons';
 import type { SourceType } from '@/types/domain';
 import { BucketChip } from './BucketChip';
 import { SourceStamp } from './SourceStamp';
@@ -37,12 +36,12 @@ export interface ItemCardProps {
 }
 
 const SOURCE_LABEL: Record<SourceType, string> = {
-  article: 'Article',
+  article: 'Articolo',
   youtube: 'Video',
   reel: 'Reel',
   tiktok: 'Reel',
-  document: 'Document',
-  other: 'Note',
+  document: 'Documento',
+  other: 'Nota',
 };
 
 /** Larghezze (in %) delle righe dello skeleton di caricamento. */
@@ -109,7 +108,7 @@ export function ItemCard({
           </Text>
         </View>
         <StatusBadge status={status}>
-          {expiring && hasDaysLeft ? `In ${daysLeft} days` : undefined}
+          {expiring && hasDaysLeft ? `Tra ${daysLeft} giorni` : undefined}
         </StatusBadge>
       </View>
 
@@ -152,7 +151,7 @@ export function ItemCard({
 
       {/* Footer: proposta bucket + tag, oppure nota di processing */}
       {processing ? (
-        <Text style={metaTextStyle(theme, theme.colors.textTertiary)}>Summarising · proposing a bucket…</Text>
+        <Text style={metaTextStyle(theme, theme.colors.textTertiary)}>Riassumo · propongo un bucket…</Text>
       ) : (
         <View style={styles.footer}>
           {proposedBucket ? (
@@ -164,13 +163,6 @@ export function ItemCard({
         </View>
       )}
 
-      {/* Riga sobria di decadimento */}
-      {expiring && !processing && hasDaysLeft ? (
-        <View style={styles.decay}>
-          <ClockIcon size={12} color={theme.colors.accent} />
-          <Text style={metaTextStyle(theme, theme.colors.accent)}>In {daysLeft} days → Archive</Text>
-        </View>
-      ) : null}
     </>
   );
 
@@ -191,5 +183,4 @@ const styles = StyleSheet.create({
   skeleton: { gap: 8, marginTop: 4, marginBottom: 14 },
   skeletonLine: { height: 12, borderRadius: 6 },
   footer: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  decay: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 12 },
 });

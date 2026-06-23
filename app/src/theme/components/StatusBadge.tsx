@@ -17,7 +17,7 @@ export type BadgeStatus = 'processing' | 'ready' | 'saved' | 'archived' | 'expir
 export interface StatusBadgeProps {
   /** @default "ready" */
   status?: BadgeStatus;
-  /** Sovrascrive l'etichetta di default (es. "In 3 days"). */
+  /** Sovrascrive l'etichetta di default (es. "Tra 3 giorni"). */
   children?: ReactNode;
   /** Mostra il pallino di stato. @default true */
   dot?: boolean;
@@ -25,11 +25,11 @@ export interface StatusBadgeProps {
 }
 
 const LABEL: Record<BadgeStatus, string> = {
-  processing: 'Processing',
-  ready: 'Ready',
-  saved: 'Saved',
-  archived: 'Archived',
-  expiring: 'Expiring',
+  processing: 'In lavorazione',
+  ready: 'Pronto',
+  saved: 'Salvato',
+  archived: 'Archiviato',
+  expiring: 'In scadenza',
 };
 
 export function StatusBadge({ status = 'ready', children, dot = true, style }: StatusBadgeProps): JSX.Element {
