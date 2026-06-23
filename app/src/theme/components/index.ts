@@ -17,3 +17,4 @@ export { AddButton, type AddButtonProps } from './AddButton';
 export { TabBar, type TabBarProps, type TabBarItem } from './TabBar';
 export { Toast, type ToastProps } from './Toast';
 export { TranscriptSheet, type TranscriptSheetProps } from './TranscriptSheet';
+export { AvatarMenu, type AvatarMenuProps } from './AvatarMenu';

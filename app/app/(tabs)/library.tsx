@@ -12,11 +12,13 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '@/features/auth';
 import { useFocusRefetch } from '@/features/useFocusRefetch';
 import { useLibrary } from '@/features/library/useLibrary';
 import { createBucket } from '@/lib/buckets';
 import { FadeInUp, staggerDelay, useTheme } from '@/theme';
 import {
+  AvatarMenu,
   BucketCard,
   Button,
   EmptyState,
@@ -30,6 +32,7 @@ import { LibraryIcon, PlusIcon, XIcon } from '@/theme/icons';
 export default function LibraryScreen() {
   const t = useTheme();
   const router = useRouter();
+  const { user, signOut } = useAuth();
   const { buckets, loading, refreshing, error, refetch } = useLibrary();
   useFocusRefetch(refetch);
   const [creating, setCreating] = useState(false);
@@ -45,9 +48,16 @@ export default function LibraryScreen() {
         <Text style={{ color: t.colors.textPrimary, fontFamily: t.font.displayBold, fontSize: t.type.title.size, lineHeight: t.type.title.lh }}>
           Libreria
         </Text>
-        <Button variant="ghost" size="sm" iconLeft={<PlusIcon color={t.colors.primary} size={18} />} onPress={() => setCreating(true)}>
-          Nuovo bucket
-        </Button>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space[1] }}>
+          <Button variant="ghost" size="sm" iconLeft={<PlusIcon color={t.colors.primary} size={18} />} onPress={() => setCreating(true)}>
+            Nuovo bucket
+          </Button>
+          <AvatarMenu
+            email={user?.email ?? null}
+            onOpenSettings={() => router.push('/settings')}
+            onSignOut={() => void signOut()}
+          />
+        </View>
       </View>
 
       {error ? (

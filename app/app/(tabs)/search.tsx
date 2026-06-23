@@ -1,11 +1,12 @@
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, FlatList, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '@/features/auth';
 import { useSearch } from '@/features/search/useSearch';
 import { daysLeft, isExpiring } from '@/lib/lifecycle';
 import { hostnameOf } from '@/lib/source';
 import { useTheme } from '@/theme';
-import { EmptyState, ErrorBanner, ItemCard, TextField } from '@/theme/components';
+import { AvatarMenu, EmptyState, ErrorBanner, ItemCard, TextField } from '@/theme/components';
 import { SearchIcon } from '@/theme/icons';
 import type { Item } from '@/types/domain';
 
@@ -13,14 +14,22 @@ import type { Item } from '@/types/domain';
 export default function SearchScreen() {
   const t = useTheme();
   const router = useRouter();
+  const { user, signOut } = useAuth();
   const { query, setQuery, results, loading, error, searched, run } = useSearch();
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.colors.bg }}>
       <View style={{ paddingHorizontal: t.gutter, paddingTop: t.space[4], paddingBottom: t.space[2], gap: t.space[4] }}>
-        <Text style={{ color: t.colors.textPrimary, fontFamily: t.font.displayBold, fontSize: t.type.title.size, lineHeight: t.type.title.lh }}>
-          Cerca
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Text style={{ color: t.colors.textPrimary, fontFamily: t.font.displayBold, fontSize: t.type.title.size, lineHeight: t.type.title.lh }}>
+            Cerca
+          </Text>
+          <AvatarMenu
+            email={user?.email ?? null}
+            onOpenSettings={() => router.push('/settings')}
+            onSignOut={() => void signOut()}
+          />
+        </View>
         <TextField
           value={query}
           onChangeText={setQuery}
