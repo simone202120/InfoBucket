@@ -3,7 +3,7 @@
  * `showToast`; il toast si nasconde da solo dopo qualche secondo. Va montato
  * sotto <ThemeProvider> e sopra le schermate.
  */
-import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Toast } from './components/Toast';
@@ -25,6 +25,12 @@ export function ToastProvider({ children }: { children: ReactNode }): JSX.Elemen
     if (timer.current) clearTimeout(timer.current);
     setMessage(m);
     timer.current = setTimeout(() => setMessage(null), VISIBLE_MS);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (timer.current) clearTimeout(timer.current);
+    };
   }, []);
 
   return (
