@@ -11,7 +11,7 @@ describe('AddButton', () => {
   it('chiama onPress al tap (variante icona)', () => {
     const onPress = jest.fn();
     const { getByLabelText } = renderInTheme(<AddButton onPress={onPress} />);
-    fireEvent.press(getByLabelText('Add'));
+    fireEvent.press(getByLabelText('Aggiungi'));
     expect(onPress).toHaveBeenCalledTimes(1);
   });
 
