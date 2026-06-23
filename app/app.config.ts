@@ -28,6 +28,9 @@ const config: ExpoConfig = {
     // Share intent Android (§12): riceve link/testo condivisi da altre app.
     // Richiede una dev/production build EAS (non funziona in Expo Go).
     ['expo-share-intent', { androidIntentFilters: ['text/*'] }],
+    // Limita il build nativo ad arm64-v8a: con le 4 ABI di default il worker EAS
+    // andava in out-of-memory durante la compilazione C++ (vedi il plugin).
+    './plugins/withAndroidReleaseTuning',
   ],
   experiments: {
     typedRoutes: true,
