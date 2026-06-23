@@ -23,7 +23,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { hostnameOf, isValidHttpUrl } from '@/lib/source';
-import { useTheme, type Theme } from '@/theme';
+import { useTheme, useToast, type Theme } from '@/theme';
 import {
   BucketChip,
   Button,
@@ -52,6 +52,7 @@ export interface ReviewScreenProps {
 export function ReviewScreen({ id }: ReviewScreenProps): JSX.Element {
   const t = useTheme();
   const router = useRouter();
+  const { showToast } = useToast();
   const {
     item,
     buckets,
@@ -106,7 +107,14 @@ export function ReviewScreen({ id }: ReviewScreenProps): JSX.Element {
         error={error}
         onSave={save}
         onRegenerate={regenerateItem}
-        onConfirm={confirm}
+        onConfirm={async (target, displayName) => {
+          const ok = await confirm(target);
+          if (ok) {
+            showToast({ message: `Salvato in «${displayName}»` });
+            router.back();
+          }
+          return ok;
+        }}
         onRemove={async () => {
           const ok = await remove();
           if (ok) router.back();
@@ -163,7 +171,7 @@ interface ReviewBodyProps {
   error: string | null;
   onSave: ReturnType<typeof useItemDetail>['save'];
   onRegenerate: ReturnType<typeof useItemDetail>['regenerateItem'];
-  onConfirm: ReturnType<typeof useItemDetail>['confirm'];
+  onConfirm: (target: ConfirmTarget, displayName: string) => Promise<boolean>;
   onRemove: () => void;
 }
 
@@ -385,7 +393,7 @@ interface ConfirmBucketProps {
   item: Item;
   buckets: ReturnType<typeof useItemDetail>['buckets'];
   confirming: boolean;
-  onConfirm: ReturnType<typeof useItemDetail>['confirm'];
+  onConfirm: (target: ConfirmTarget, displayName: string) => Promise<boolean>;
 }
 
 function ConfirmBucket({ item, buckets, confirming, onConfirm }: ConfirmBucketProps): JSX.Element {
@@ -411,7 +419,7 @@ function ConfirmBucket({ item, buckets, confirming, onConfirm }: ConfirmBucketPr
 
   const createNew = () => {
     if (!name.trim()) return;
-    void onConfirm({ kind: 'new', name, description });
+    void onConfirm({ kind: 'new', name, description }, name);
   };
 
   return (
@@ -425,7 +433,7 @@ function ConfirmBucket({ item, buckets, confirming, onConfirm }: ConfirmBucketPr
           <BucketChip
             name={suggestion.name}
             isNew={suggestion.isNew}
-            onAccept={() => void onConfirm(suggestion.target)}
+            onAccept={() => void onConfirm(suggestion.target, suggestion.name)}
           />
         </View>
       ) : null}
@@ -439,7 +447,7 @@ function ConfirmBucket({ item, buckets, confirming, onConfirm }: ConfirmBucketPr
               <BucketChip
                 key={bucket.id}
                 name={bucket.name}
-                onAccept={() => void onConfirm({ kind: 'existing', bucketId: bucket.id })}
+                onAccept={() => void onConfirm({ kind: 'existing', bucketId: bucket.id }, bucket.name)}
               />
             ))}
           </View>

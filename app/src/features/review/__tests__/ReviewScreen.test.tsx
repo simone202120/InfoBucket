@@ -4,11 +4,14 @@ import type { ReactElement } from 'react';
 import { ReviewScreen } from '../ReviewScreen';
 import { confirmItem, getItem } from '@/lib/items';
 import { listBuckets } from '@/lib/buckets';
-import { ThemeProvider } from '@/theme';
+import { ThemeProvider, ToastProvider } from '@/theme';
 import type { Item } from '@/types/domain';
 
 const mockBack = jest.fn();
-jest.mock('expo-router', () => ({ useRouter: () => ({ back: mockBack, push: jest.fn() }) }));
+jest.mock('expo-router', () => ({
+  useRouter: () => ({ back: mockBack, push: jest.fn() }),
+  useFocusEffect: () => undefined,
+}));
 jest.mock('@/lib/items', () => ({
   getItem: jest.fn(),
   updateItem: jest.fn(),
@@ -50,7 +53,13 @@ const item = (over: Partial<Item> = {}): Item => ({
 
 const metrics = { frame: { x: 0, y: 0, width: 390, height: 844 }, insets: { top: 0, left: 0, right: 0, bottom: 0 } };
 const wrap = (ui: ReactElement) =>
-  render(<SafeAreaProvider initialMetrics={metrics}>{<ThemeProvider>{ui}</ThemeProvider>}</SafeAreaProvider>);
+  render(
+    <SafeAreaProvider initialMetrics={metrics}>
+      <ThemeProvider>
+        <ToastProvider>{ui}</ToastProvider>
+      </ThemeProvider>
+    </SafeAreaProvider>,
+  );
 
 beforeEach(() => {
   mockBack.mockReset();
@@ -122,4 +131,18 @@ it('mostra il testo guida per salvare in un bucket', async () => {
   const { getByText } = wrap(<ReviewScreen id="i1" />);
 
   await waitFor(() => expect(getByText('Tocca un bucket per salvarci l\'elemento.')).toBeTruthy());
+});
+
+it('mostra un toast e torna indietro dopo la conferma in un bucket', async () => {
+  getItemMock.mockResolvedValue(item({ suggestedBucketId: 'b1' }));
+  listBucketsMock.mockResolvedValue([bucket('b1', 'Cucina')]);
+  confirmItemMock.mockResolvedValue(item({ status: 'saved', bucketId: 'b1' }));
+
+  const { getByLabelText, getByText } = wrap(<ReviewScreen id="i1" />);
+
+  await waitFor(() => expect(getByLabelText('Accept Cucina')).toBeTruthy());
+  fireEvent.press(getByLabelText('Accept Cucina'));
+
+  await waitFor(() => expect(mockBack).toHaveBeenCalled());
+  expect(getByText('Salvato in «Cucina»')).toBeTruthy();
 });
