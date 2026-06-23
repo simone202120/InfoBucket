@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusRefetch } from '@/features/useFocusRefetch';
 import { useLibrary } from '@/features/library/useLibrary';
 import { createBucket } from '@/lib/buckets';
 import { FadeInUp, staggerDelay, useTheme } from '@/theme';
@@ -30,6 +31,7 @@ export default function LibraryScreen() {
   const t = useTheme();
   const router = useRouter();
   const { buckets, loading, refreshing, error, refetch } = useLibrary();
+  useFocusRefetch(refetch);
   const [creating, setCreating] = useState(false);
 
   const onCreated = async () => {

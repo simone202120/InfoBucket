@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusRefetch } from '@/features/useFocusRefetch';
 import { useBucketDetail } from '@/features/library/useBucketDetail';
 import { hostnameOf } from '@/lib/source';
 import { FadeInUp, staggerDelay, useTheme } from '@/theme';
@@ -15,6 +16,7 @@ export default function BucketDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const bucketId = id ?? '';
   const { bucket, items, loading, refreshing, error, refetch } = useBucketDetail(bucketId);
+  useFocusRefetch(refetch);
 
   const title = bucket?.name ?? 'Bucket';
 

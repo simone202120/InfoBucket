@@ -7,6 +7,8 @@
  */
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
+import { useFocusRefetch } from '@/features/useFocusRefetch';
+import { usePolling } from '@/features/usePolling';
 import {
   ActivityIndicator,
   Alert,
@@ -58,11 +60,14 @@ export function ReviewScreen({ id }: ReviewScreenProps): JSX.Element {
     regenerating,
     confirming,
     error,
+    refetch,
     save,
     regenerateItem,
     confirm,
     remove,
   } = useItemDetail(id);
+  useFocusRefetch(refetch);
+  usePolling(refetch, { active: item?.status === 'processing' });
 
   if (loading && !item) {
     return (

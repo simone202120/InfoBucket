@@ -1,6 +1,8 @@
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusRefetch } from '@/features/useFocusRefetch';
+import { usePolling } from '@/features/usePolling';
 import { useInbox } from '@/features/inbox/useInbox';
 import { daysLeft, isExpiring } from '@/lib/lifecycle';
 import { hostnameOf } from '@/lib/source';
@@ -13,6 +15,8 @@ export default function InboxScreen() {
   const t = useTheme();
   const router = useRouter();
   const { items, loading, refreshing, error, refetch } = useInbox();
+  useFocusRefetch(refetch);
+  usePolling(refetch, { active: items.some((it) => it.status === 'processing') });
 
   const openAdd = () => router.push('/add');
 
