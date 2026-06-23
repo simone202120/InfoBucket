@@ -5,8 +5,8 @@
  * bucket accettabile al volo) ed expiring (countdown ambra sobrio).
  * Compone SourceStamp · StatusBadge · BucketChip · Tag.
  */
-import { StyleSheet, Text, Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
-import { useTheme, type Theme } from '@/theme';
+import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { PressableScale, useTheme, type Theme } from '@/theme';
 import type { SourceType } from '@/types/domain';
 import { BucketChip } from './BucketChip';
 import { SourceStamp } from './SourceStamp';
@@ -168,9 +168,9 @@ export function ItemCard({
 
   if (onPress) {
     return (
-      <Pressable accessibilityRole="button" onPress={onPress} style={cardStyle}>
+      <PressableScale accessibilityRole="button" onPress={onPress} style={cardStyle}>
         {content}
-      </Pressable>
+      </PressableScale>
     );
   }
   return <View style={cardStyle}>{content}</View>;

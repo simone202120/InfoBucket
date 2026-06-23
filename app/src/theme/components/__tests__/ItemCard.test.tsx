@@ -50,4 +50,13 @@ describe('ItemCard', () => {
     );
     expect(getAllByText('Tra 3 giorni').length).toBe(1);
   });
+
+  it('chiama onPress quando il card è premuto', () => {
+    const onPress = jest.fn();
+    const { getByRole } = renderInTheme(
+      <ItemCard source="article" status="ready" summary={SUMMARY} onPress={onPress} />,
+    );
+    fireEvent.press(getByRole('button'));
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
 });
