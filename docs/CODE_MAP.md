@@ -57,6 +57,7 @@ Entry: `expo-router` (cartella `app/app/`).
 | `src/features/review/useItemDetail.ts` | Stato dettaglio/review di un item: caricamento, conferma in bucket, modifica, rigenera, elimina | `@/lib/items`, `@/lib/buckets` |
 | `src/features/review/ReviewScreen.tsx` | UI di review: summary eroe, tag, scelta bucket, azioni (conferma/rigenera/elimina) | `useItemDetail`, `@/theme` |
 | `src/features/search/useSearch.ts` | Stato ricerca: query con debounce, fusione risultati, loading/error | `@/lib/items` |
+| `src/features/navigation/ModernTabBar.tsx` | Tab bar inferiore "a pillola" flottante (custom `tabBar` di expo-router): tab attiva con pillola colorata icona+etichetta, inattive solo icona. Presentazionale, stile solo da `@/theme` | `@/theme`, `@react-navigation/bottom-tabs` |
 
 **Schermate (`app/app/`, expo-router file-based):**
 

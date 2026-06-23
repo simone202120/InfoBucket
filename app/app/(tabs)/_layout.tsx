@@ -1,22 +1,13 @@
 import { Tabs } from 'expo-router';
-import { useTheme } from '@/theme';
+import { ModernTabBar } from '@/features/navigation/ModernTabBar';
 import { InboxIcon, LibraryIcon, SearchIcon } from '@/theme/icons';
 
-/** Tab bar in basso: Inbox · Libreria · Cerca (brief di design). */
+/** Tab bar in basso "a pillola" (ModernTabBar): Inbox · Libreria · Cerca. */
 export default function TabsLayout() {
-  const t = useTheme();
   return (
     <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: t.colors.primary,
-        tabBarInactiveTintColor: t.colors.textTertiary,
-        tabBarStyle: {
-          backgroundColor: t.colors.surface,
-          borderTopColor: t.colors.border,
-        },
-        tabBarLabelStyle: { fontFamily: t.font.display, fontSize: t.type.meta.size },
-      }}
+      screenOptions={{ headerShown: false }}
+      tabBar={(props) => <ModernTabBar {...props} />}
     >
       <Tabs.Screen
         name="index"
