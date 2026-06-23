@@ -61,7 +61,7 @@ Entry: `expo-router` (cartella `app/app/`).
 | `src/features/auth/` | `AuthProvider` + `useAuth` (email/password Supabase, sessione persistita, errori in italiano) | `@/lib/supabase` |
 | `src/features/useItemList.ts` | Hook generico lista item (loading/refreshing/error/refetch), riusato da Inbox e Archivio | — |
 | `src/features/usePolling.ts` | Avvia un intervallo di polling sul refetch di una lista finché almeno un item è in stato `processing`; si ferma da solo quando la coda si svuota | — |
-| `src/features/useFocusRefetch.ts` | Esegue un refetch automatico ogni volta che la schermata torna in foreground (via `useIsFocused`) | expo-router |
+| `src/features/useFocusRefetch.ts` | Esegue un refetch automatico ogni volta che la schermata torna in foreground (via `useFocusEffect`) | expo-router |
 | `src/features/inbox/useInbox.ts` | Stato Inbox (su `useItemList` + `listInbox`) | `useItemList`, `@/lib/items` |
 | `src/features/archive/useArchive.ts` | Stato Archivio (su `useItemList` + `listArchived`) | `useItemList`, `@/lib/items` |
 | `src/features/review/useItemDetail.ts` | Stato dettaglio/review di un item: caricamento, conferma in bucket, modifica, rigenera, elimina | `@/lib/items`, `@/lib/buckets` |
