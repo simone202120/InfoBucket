@@ -82,11 +82,15 @@ Impatti tipici:
 - Cambi nomi colonna DB → solo `mappers.ts` (+ migration).
 - Cambi forma query `items` → solo `src/lib/items.ts`.
 
-**Config nativo (EAS):** `app.config.ts` definisce app + plugin. `plugins/withAndroidReleaseTuning.js`
+**Config nativo (EAS):** `app.config.ts` definisce app + plugin; `eas.json` definisce i
+profili di build (`development`/`preview`/`production`, tutti APK). `plugins/withAndroidReleaseTuning.js`
 è un config plugin locale che limita `reactNativeArchitectures` a `arm64-v8a` in
 `gradle.properties` (EAS rigenera `android/` a ogni build, quindi va fatto via plugin,
 non a mano): le 4 ABI di default facevano andare in OOM il worker durante la
-compilazione C++. Cambi sulle ABI/proprietà Gradle → solo questo plugin.
+compilazione C++. Cambi sulle ABI/proprietà Gradle → solo questo plugin; cambi sui
+profili di build → solo `eas.json`. La root del progetto Expo è `app/` (lì stanno
+`package.json`, `app.config.ts`, `eas.json`): per il "Build from GitHub" la base
+directory su EAS va impostata a `app`.
 
 ## `supabase/` — backend (il cervello)
 
