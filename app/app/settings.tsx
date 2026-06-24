@@ -19,7 +19,7 @@ import {
   type AccentName,
   type ThemeMode,
 } from '@/theme';
-import { Button, ErrorBanner, TextField } from '@/theme/components';
+import { AccentPicker, Button, ErrorBanner, TextField } from '@/theme/components';
 import { CheckIcon, TrashIcon, XIcon } from '@/theme/icons';
 import type { BucketOverview } from '@/types/domain';
 
@@ -31,7 +31,14 @@ const ACCENT_LABEL: Record<AccentName, string> = {
   blush: 'Rosa',
   tangerine: 'Mandarino',
   oxblood: 'Bordeaux',
+  forest: 'Foresta',
+  indigo: 'Indaco',
+  ruby: 'Rubino',
+  amber: 'Ambra',
 };
+
+/** Colore di partenza del selettore personalizzato quando non c'è ancora scelta. */
+const DEFAULT_CUSTOM_COLOR = '#2D5AD9';
 
 /** Opzioni di tema: null segue il sistema. */
 const MODE_OPTIONS: readonly { label: string; value: ThemeMode | null }[] = [
@@ -183,7 +190,8 @@ function AccountSection(): JSX.Element {
 
 function AppearanceSection(): JSX.Element {
   const t = useTheme();
-  const { setAccent, setModeOverride, modeOverride } = useThemeControls();
+  const { setAccent, setCustomAccent, setModeOverride, modeOverride, accentName, customColor } = useThemeControls();
+  const isCustom = accentName === 'custom';
 
   return (
     <View>
@@ -195,11 +203,19 @@ function AppearanceSection(): JSX.Element {
             <AccentChip
               key={name}
               name={name}
-              active={name === t.accent}
+              active={accentName === name}
               onPress={() => setAccent(name)}
             />
           ))}
+          <CustomAccentChip
+            active={isCustom}
+            color={customColor ?? DEFAULT_CUSTOM_COLOR}
+            onPress={() => setCustomAccent(customColor ?? DEFAULT_CUSTOM_COLOR)}
+          />
         </View>
+        {isCustom ? (
+          <AccentPicker value={customColor ?? DEFAULT_CUSTOM_COLOR} onChange={setCustomAccent} />
+        ) : null}
 
         <BodyText secondary>Tema</BodyText>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: t.space[3] }}>
@@ -241,6 +257,35 @@ function AccentChip({ name, active, onPress }: { name: AccentName; active: boole
       <View style={{ width: 18, height: 18, borderRadius: t.radius.pill, backgroundColor: swatch }} />
       <Text style={{ fontFamily: t.font.display, fontSize: t.type.body.size, color: t.colors.textPrimary }}>
         {ACCENT_LABEL[name]}
+      </Text>
+    </Pressable>
+  );
+}
+
+/** Chip "Personalizza": apre il selettore del colore d'accento su misura. */
+function CustomAccentChip({ active, color, onPress }: { active: boolean; color: string; onPress: () => void }): JSX.Element {
+  const t = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityState={{ selected: active }}
+      accessibilityLabel="Accento personalizzato"
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: t.space[3],
+        minHeight: t.touchMin,
+        paddingHorizontal: t.space[4],
+        borderRadius: t.radius.sm,
+        borderWidth: 1.5,
+        borderColor: active ? color : t.colors.border,
+        backgroundColor: active ? t.colors.surfaceHover : t.colors.surface,
+      }}
+    >
+      <View style={{ width: 18, height: 18, borderRadius: t.radius.pill, backgroundColor: color, borderWidth: 1, borderColor: t.colors.border }} />
+      <Text style={{ fontFamily: t.font.display, fontSize: t.type.body.size, color: t.colors.textPrimary }}>
+        Personalizza
       </Text>
     </Pressable>
   );

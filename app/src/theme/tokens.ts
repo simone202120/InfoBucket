@@ -155,6 +155,10 @@ export const accents = {
   blush: { light: '#DC6F94', dark: '#EF9CB7' },
   tangerine: { light: '#E5731F', dark: '#F19A4E' },
   oxblood: { light: '#8E2E3C', dark: '#D06672' },
+  forest: { light: '#2F7D4F', dark: '#5FB880' },
+  indigo: { light: '#4B4BD6', dark: '#8C8CF0' },
+  ruby: { light: '#C0344D', dark: '#E5717F' },
+  amber: { light: '#C77D29', dark: '#E5B569' },
 } as const;
 
 export type AccentName = keyof typeof accents;
