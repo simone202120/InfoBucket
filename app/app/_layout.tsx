@@ -8,6 +8,7 @@ import { ShareIntentProvider, useShareIntentContext } from 'expo-share-intent';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth, type AuthStatus } from '@/features/auth';
 import { extractFirstUrl } from '@/lib/source';
@@ -26,18 +27,20 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
-    <SafeAreaProvider>
-      <ShareIntentProvider>
-        <ThemeProvider>
-          <ToastProvider>
-            <AuthProvider>
-              <StatusBar style="auto" />
-              <RootNavigator />
-            </AuthProvider>
-          </ToastProvider>
-        </ThemeProvider>
-      </ShareIntentProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <ShareIntentProvider>
+          <ThemeProvider>
+            <ToastProvider>
+              <AuthProvider>
+                <StatusBar style="auto" />
+                <RootNavigator />
+              </AuthProvider>
+            </ToastProvider>
+          </ThemeProvider>
+        </ShareIntentProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 
