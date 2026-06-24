@@ -7,6 +7,15 @@ vedi `docs/CODE_MAP.md`; per la prova in locale `docs/RUN_LOCAL.md`.
 I segreti vivono SOLO lato server (Edge Functions secrets + env della VPS), MAI nel
 repo o nel client (CLAUDE.md §3).
 
+> [!IMPORTANT]
+> **Deploy pendente — function `dispatch` (fix YouTube).** Il branch `piano-spec-2`
+> aggiunge a `dispatch` un fallback caption oEmbed per YouTube: senza transcript
+> pubblico ora ricava titolo+canale e propone subito un riassunto (prima YouTube
+> dipendeva interamente dal worker e poteva restare "senza contenuto"). **Il fix ha
+> effetto solo dopo aver ridistribuito la function**:
+> `supabase functions deploy dispatch`.
+> Togli questa nota una volta fatto il deploy.
+
 ---
 
 ## 1. Edge Functions (Supabase cloud)
