@@ -45,8 +45,9 @@ Entry: `expo-router` (cartella `app/app/`).
 | `src/theme/index.ts` | **Adapter del tema**: `ThemeProvider`, `useTheme`, `useThemeControls`, `sourceColor()`. Gestisce accento preset **o personalizzato** (via `accent.ts`) con preferenze persistite (`themeStorage.ts`). UNICO punto che l'app conosce per lo stile | `tokens.ts`, `accent.ts`, `themeStorage.ts`, `types/domain.ts` |
 | `src/theme/accent.ts` | Derivazione **pura** dell'accento personalizzato: luminanza/contrasto WCAG, varianti hover/press/soft e testo a contrasto AA | — |
 | `src/theme/themeStorage.ts` | Load/save delle preferenze tema (accento, colore custom, modo) in AsyncStorage; parsing difensivo → default | `tokens.ts` |
+| `src/theme/haptics.ts` | Wrapper aptico (`haptics.success`/`light`) — unico punto che conosce `expo-haptics`; "fire and forget", non lancia mai | `expo-haptics` |
 | `src/theme/icons.tsx` | Icone (wrapper `lucide-react-native`) + **loghi brand reali** (YouTube/Instagram/TikTok, SVG) + **glifi duotone** (documento/nota/articolo) + `SOURCE_ICON` | `types/domain.ts`, `react-native-svg` |
-| `src/theme/components/*` | **Libreria UI** (RN) del design system: Button, TextField, NoteField, SourceStamp, StatusBadge, Tag, BucketChip, **BucketCard**, ItemCard (con **rail di provenienza**), EmptyState, ErrorBanner, AddButton, **TabBar**, **AvatarMenu**, **ListSkeleton**, **Toast**, **TranscriptSheet**, **AccentPicker**, **Favicon**, **ScreenHeader**, **Wordmark**. Stile solo da `useTheme()` | `@/theme`, `icons` |
+| `src/theme/components/*` | **Libreria UI** (RN) del design system: Button, TextField, NoteField, SourceStamp, StatusBadge, Tag, BucketChip, **BucketCard**, ItemCard (con **rail di provenienza** + draw-in e **swipe** Archivia/Rivedi), EmptyState, ErrorBanner, AddButton, **TabBar**, **AvatarMenu**, **ListSkeleton** (shimmer), **Toast** (entrata/uscita animata), **TranscriptSheet**, **AccentPicker**, **Favicon**, **ScreenHeader**, **Wordmark**. Stile solo da `useTheme()` | `@/theme`, `icons`, `react-native-gesture-handler` |
 | `src/theme/components/AccentPicker.tsx` | Selettore di accento personalizzato (tinte rapide + campo esadecimale validato), senza dipendenze esterne | `@/theme` |
 | `src/theme/components/Favicon.tsx` | Favicon reale del dominio di un articolo (servizio Google), con fallback al glifo se manca/non carica | `@/lib/source` |
 | `src/theme/components/ScreenHeader.tsx` | Header editoriale condiviso (occhiello mono + titolo display + slot azioni), usato nelle tre tab | `@/theme` |
@@ -62,16 +63,17 @@ Entry: `expo-router` (cartella `app/app/`).
 | `src/lib/mappers.ts` | Mapping righe DB snake_case ↔ tipi di dominio camelCase | `types/domain.ts` |
 | `src/lib/source.ts` | Rilevamento `SourceType` da URL, `hostnameOf`, `isValidHttpUrl` e `extractFirstUrl` (estrae il primo URL da un testo, usato dallo share intent). Logica pura | `types/domain.ts` |
 | `src/lib/lifecycle.ts` | Countdown decadenza lato client (giorni all'archivio/cancellazione) | `types/domain.ts` |
-| `src/lib/items.ts` | **Repository `items`**: `listInbox`, `listArchived`, `addItemByUrl` (valida URL, rileva source), `getItem`, `updateItem`, `confirmItem`, `deleteItem`, `regenerate`, `searchItems` (invoca la Edge Function `search`) | `supabase`, `mappers`, `source` |
+| `src/lib/items.ts` | **Repository `items`**: `listInbox`, `listArchived`, `addItemByUrl` (valida URL, rileva source), `getItem`, `updateItem`, `confirmItem`, `archiveItem` (decadimento manuale), `deleteItem`, `regenerate`, `searchItems` (invoca la Edge Function `search`) | `supabase`, `mappers`, `source` |
 | `src/lib/buckets.ts` | **Repository `buckets`**: `listBuckets`, `createBucket` | `supabase`, `mappers` |
 | `src/features/auth/` | `AuthProvider` + `useAuth` (email/password Supabase, sessione persistita, errori in italiano) | `@/lib/supabase` |
 | `src/features/useItemList.ts` | Hook generico lista item (loading/refreshing/error/refetch), riusato da Inbox e Archivio | — |
 | `src/features/usePolling.ts` | Avvia un intervallo di polling sul refetch di una lista finché almeno un item è in stato `processing`; si ferma da solo quando la coda si svuota | — |
 | `src/features/useFocusRefetch.ts` | Esegue un refetch automatico ogni volta che la schermata torna in foreground (via `useFocusEffect`) | expo-router |
 | `src/features/inbox/useInbox.ts` | Stato Inbox (su `useItemList` + `listInbox`) | `useItemList`, `@/lib/items` |
+| `src/features/inbox/groupInbox.ts` | Raggruppamento **puro** degli item Inbox in "in scadenza" / "recenti" (per le sezioni della lista) | `@/lib/lifecycle` |
 | `src/features/archive/useArchive.ts` | Stato Archivio (su `useItemList` + `listArchived`) | `useItemList`, `@/lib/items` |
 | `src/features/review/useItemDetail.ts` | Stato dettaglio/review di un item: caricamento, conferma in bucket, modifica, rigenera, elimina | `@/lib/items`, `@/lib/buckets` |
-| `src/features/review/ReviewScreen.tsx` | UI di review: summary eroe, tag, scelta bucket, azioni (conferma/rigenera/elimina); conferma mostra toast e torna indietro; bottone trascrizione apre `TranscriptSheet` | `useItemDetail`, `@/theme` |
+| `src/features/review/ReviewScreen.tsx` | UI di review: **lettura immersiva** di default (riassunto eroe + Modifica) / modalità edit (summary, tag, nota); scelta bucket, azioni (conferma/rigenera/elimina); conferma → toast + aptico e torna indietro; bottone trascrizione apre `TranscriptSheet` | `useItemDetail`, `@/theme`, `@/theme/haptics` |
 | `src/features/search/useSearch.ts` | Stato ricerca: query con debounce, fusione risultati, loading/error | `@/lib/items` |
 | `src/features/library/useLibrary.ts` | Stato Libreria: bucket con statistiche | `@/lib/buckets` |
 | `src/features/library/useBucketDetail.ts` | Stato dettaglio bucket: testata + item del bucket | `@/lib/buckets`, `@/lib/items` |
@@ -84,7 +86,7 @@ Entry: `expo-router` (cartella `app/app/`).
 | `_layout` | `app/_layout.tsx` | Carica font, monta `ThemeProvider`+`AuthProvider`+`ShareIntentProvider`, **auth-gate** (redirect login↔app) e **share intent**: a link condiviso → apre /add precompilato (`extractFirstUrl`). Registra le route (incl. `bucket/[id]`, `settings` modale) |
 | `(tabs)/_layout` | `app/(tabs)/_layout.tsx` | Monta il **`TabBar` del design system** (Inbox·Libreria·Cerca) adattando lo stato di expo-router (rotta↔tab) + **AddButton "+" flottante GLOBALE** sopra la barra |
 | `/login` | `app/login.tsx` | Accesso/registrazione (usa `useAuth`, `Button`, `TextField`, `ErrorBanner`) |
-| `/` (tab) | `app/(tabs)/index.tsx` | **Inbox**: lista `ItemCard` (comparsa staggered), pull-to-refresh, header con Archivio + **AvatarMenu** (sostituisce l'ingranaggio), skeleton al primo caricamento, polling automatico se ci sono item in lavorazione, refetch al focus; stato vuoto/errore |
+| `/` (tab) | `app/(tabs)/index.tsx` | **Inbox**: `SectionList` a sezioni (**In scadenza / Recenti** via `groupInbox`) di `ItemCard` (comparsa staggered, **swipe** Archivia/Rivedi), pull-to-refresh, `ScreenHeader` con Archivio + **AvatarMenu**, skeleton al primo caricamento, polling automatico se ci sono item in lavorazione, refetch al focus; stato vuoto/errore |
 | `/search` (tab) | `app/(tabs)/search.tsx` | **Ricerca** ibrida (semantica + keyword) su saved/archived via `useSearch` → Edge Function `search` |
 | `/library` (tab) | `app/(tabs)/library.tsx` | **Libreria**: griglia di `BucketCard` (`useLibrary`), "Nuovo bucket", tap → dettaglio bucket; refetch al focus |
 | `/bucket/[id]` | `app/bucket/[id].tsx` | **Dettaglio bucket** (`useBucketDetail`): elementi salvati, tap → review |
@@ -180,14 +182,16 @@ della riga `items` (`mappers.ts` ↔ schema).
 
 ## Stato dei test
 
-- `app/`: Jest — utility pure (`source`, `lifecycle`, `mappers`), repository (`items`,
-  `items-mutations`, `buckets`), hook (`useInbox`, `useArchive`, `useSearch`,
-  `useItemDetail`, `usePolling`, `useFocusRefetch`), auth (`AuthContext`), `ReviewScreen`,
+- `app/`: Jest — utility pure (`source`, `lifecycle`, `mappers`, `groupInbox`), repository (`items`,
+  `items-mutations` incl. `archiveItem`, `buckets`), hook (`useInbox`, `useArchive`, `useSearch`,
+  `useItemDetail`, `usePolling`, `useFocusRefetch`), auth (`AuthContext`), `ReviewScreen` (lettura/edit),
   libreria componenti UI (incl. `AvatarMenu`, `ListSkeleton`, `Toast`, `TranscriptSheet`,
-  `ToastProvider`, `AccentPicker`, `Favicon`, `ScreenHeader`, `Wordmark`, rail di `ItemCard`),
-  tema (`accent`, `themeStorage`, `scrim`, accento personalizzato persistito),
+  `ToastProvider`, `AccentPicker`, `Favicon`, `ScreenHeader`, `Wordmark`, rail + swipe di `ItemCard`),
+  tema (`accent`, `themeStorage`, `scrim`, accento personalizzato persistito, `haptics`),
   schermata `add`, Libreria/dettaglio bucket, Impostazioni, BucketCard, motion.
-  `npm test` → **160 verdi** (44 suite), `typecheck` e `lint` puliti.
+  `npm test` → **168 verdi** (46 suite), `typecheck` e `lint` puliti.
+  Dipendenze native aggiunte: `react-native-gesture-handler` (swipe) ed `expo-haptics`
+  (feedback) — richiedono un rebuild del dev client / APK EAS, non solo Metro.
 - `worker/`: Vitest — `composeRawContent`, parser caption, estrazione media
   (`media`, inclusi i cookie yt-dlp), validazione env (`env`), loop di polling
   (`index`). `npm test` → **57 verdi** (5 file).
