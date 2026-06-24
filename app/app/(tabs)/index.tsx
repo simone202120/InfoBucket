@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusRefetch } from '@/features/useFocusRefetch';
 import { usePolling } from '@/features/usePolling';
@@ -8,7 +8,7 @@ import { daysLeft, isExpiring } from '@/lib/lifecycle';
 import { hostnameOf } from '@/lib/source';
 import { useAuth } from '@/features/auth';
 import { FadeInUp, staggerDelay, useTheme } from '@/theme';
-import { AvatarMenu, EmptyState, ErrorBanner, ItemCard, ListSkeleton, type ProposedBucket } from '@/theme/components';
+import { AvatarMenu, EmptyState, ErrorBanner, ItemCard, ListSkeleton, ScreenHeader, type ProposedBucket } from '@/theme/components';
 import { ArchiveIcon, InboxIcon } from '@/theme/icons';
 import type { Item } from '@/types/domain';
 
@@ -24,21 +24,22 @@ export default function InboxScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.colors.bg }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: t.gutter, paddingVertical: t.space[4] }}>
-        <Text style={{ color: t.colors.textPrimary, fontFamily: t.font.displayBold, fontSize: t.type.title.size, lineHeight: t.type.title.lh }}>
-          Inbox
-        </Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space[2] }}>
-          <Pressable onPress={() => router.push('/archive')} accessibilityRole="button" accessibilityLabel="Archivio" hitSlop={8} style={{ padding: t.space[2] }}>
-            <ArchiveIcon color={t.colors.textSecondary} size={22} />
-          </Pressable>
-          <AvatarMenu
-            email={user?.email ?? null}
-            onOpenSettings={() => router.push('/settings')}
-            onSignOut={() => void signOut()}
-          />
-        </View>
-      </View>
+      <ScreenHeader
+        kicker={items.length > 0 ? `${items.length} da rivedere` : undefined}
+        title="Inbox"
+        right={
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space[2] }}>
+            <Pressable onPress={() => router.push('/archive')} accessibilityRole="button" accessibilityLabel="Archivio" hitSlop={8} style={{ padding: t.space[2] }}>
+              <ArchiveIcon color={t.colors.textSecondary} size={22} />
+            </Pressable>
+            <AvatarMenu
+              email={user?.email ?? null}
+              onOpenSettings={() => router.push('/settings')}
+              onSignOut={() => void signOut()}
+            />
+          </View>
+        }
+      />
 
       {error ? (
         <View style={{ paddingHorizontal: t.gutter }}>

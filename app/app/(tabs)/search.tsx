@@ -1,12 +1,12 @@
 import { useRouter } from 'expo-router';
-import { FlatList, Text, View } from 'react-native';
+import { FlatList, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/features/auth';
 import { useSearch } from '@/features/search/useSearch';
 import { daysLeft, isExpiring } from '@/lib/lifecycle';
 import { hostnameOf } from '@/lib/source';
 import { useTheme } from '@/theme';
-import { AvatarMenu, EmptyState, ErrorBanner, ItemCard, ListSkeleton, TextField } from '@/theme/components';
+import { AvatarMenu, EmptyState, ErrorBanner, ItemCard, ListSkeleton, ScreenHeader, TextField } from '@/theme/components';
 import { SearchIcon } from '@/theme/icons';
 import type { Item } from '@/types/domain';
 
@@ -19,17 +19,17 @@ export default function SearchScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.colors.bg }}>
-      <View style={{ paddingHorizontal: t.gutter, paddingTop: t.space[4], paddingBottom: t.space[2], gap: t.space[4] }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Text style={{ color: t.colors.textPrimary, fontFamily: t.font.displayBold, fontSize: t.type.title.size, lineHeight: t.type.title.lh }}>
-            Cerca
-          </Text>
+      <ScreenHeader
+        title="Cerca"
+        right={
           <AvatarMenu
             email={user?.email ?? null}
             onOpenSettings={() => router.push('/settings')}
             onSignOut={() => void signOut()}
           />
-        </View>
+        }
+      />
+      <View style={{ paddingHorizontal: t.gutter, paddingBottom: t.space[2] }}>
         <TextField
           value={query}
           onChangeText={setQuery}

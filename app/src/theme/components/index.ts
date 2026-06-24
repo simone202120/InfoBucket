@@ -21,3 +21,4 @@ export { AvatarMenu, type AvatarMenuProps } from './AvatarMenu';
 export { ListSkeleton, type ListSkeletonProps } from './ListSkeleton';
 export { AccentPicker, type AccentPickerProps } from './AccentPicker';
 export { Favicon, type FaviconProps } from './Favicon';
+export { ScreenHeader, type ScreenHeaderProps } from './ScreenHeader';
