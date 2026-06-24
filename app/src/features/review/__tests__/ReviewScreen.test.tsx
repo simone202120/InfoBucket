@@ -68,14 +68,28 @@ beforeEach(() => {
   listBucketsMock.mockReset();
 });
 
-it('mostra il riassunto e i tag dell\'elemento', async () => {
+it('apre in lettura con il riassunto in evidenza e i tag', async () => {
   getItemMock.mockResolvedValue(item());
   listBucketsMock.mockResolvedValue([{ id: 'b1', name: 'Cucina', description: null, createdAt: '2026-06-22T12:00:00Z' }]);
 
-  const { getByDisplayValue, getByText } = wrap(<ReviewScreen id="i1" />);
+  const { getByText } = wrap(<ReviewScreen id="i1" />);
 
-  await waitFor(() => expect(getByDisplayValue('Un riassunto leggibile')).toBeTruthy());
+  // In lettura il riassunto è testo (non un campo editabile).
+  await waitFor(() => expect(getByText('Un riassunto leggibile')).toBeTruthy());
   expect(getByText('cucina')).toBeTruthy();
+  expect(getByText('Modifica')).toBeTruthy();
+});
+
+it('Modifica passa alla UI editabile (campo riassunto)', async () => {
+  getItemMock.mockResolvedValue(item());
+  listBucketsMock.mockResolvedValue([{ id: 'b1', name: 'Cucina', description: null, createdAt: '2026-06-22T12:00:00Z' }]);
+
+  const { getByText, getByDisplayValue } = wrap(<ReviewScreen id="i1" />);
+
+  await waitFor(() => expect(getByText('Modifica')).toBeTruthy());
+  fireEvent.press(getByText('Modifica'));
+  // Ora il riassunto è un campo con il valore corrente.
+  expect(getByDisplayValue('Un riassunto leggibile')).toBeTruthy();
 });
 
 const bucket = (id: string, name: string) => ({

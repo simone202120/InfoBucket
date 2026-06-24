@@ -176,8 +176,16 @@ async function extractRawContent(
     case "youtube": {
       if (!item.source_url) return { route: "media" };
       const transcript = await fetchYoutubeTranscript(item.source_url);
-      // Niente transcript pubblico → il worker estrarrà l'audio (§6.1).
-      return transcript ? { route: "light", rawContent: transcript } : { route: "media" };
+      // Transcript pubblico disponibile: è già il contenuto completo.
+      if (transcript) return { route: "light", rawContent: transcript };
+      // Niente transcript (gli IP cloud vengono spesso bloccati): prova la caption
+      // oEmbed (titolo + canale) per dare un riassunto SUBITO — come tiktok/reel — e
+      // accoda comunque l'audio al worker, che arricchirà con la trascrizione (§6.1).
+      const meta = await fetchLightCaption("youtube", item.source_url, fetchText);
+      const rawContent = composeCaptionRawContent(meta);
+      if (rawContent) return { route: "light", rawContent, queueMedia: true };
+      // Nemmeno la caption pubblica: lascia l'intera estrazione al worker.
+      return { route: "media" };
     }
 
     case "tiktok":

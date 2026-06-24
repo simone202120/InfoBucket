@@ -1,13 +1,23 @@
 /**
  * SourceStamp — il marchio di provenienza. Un quadrato tinto nella tinta della
- * fonte che contiene il suo glifo; ogni elemento catturato apre con uno.
- * Opzionalmente mostra il nome della fonte (e testo libero) in mono catalogo.
- * Colore e glifo arrivano dal tema (`theme.sourceColor` + `SOURCE_ICON`).
+ * fonte che contiene la sua rappresentazione; ogni elemento catturato apre con
+ * uno. Scegliamo la rappresentazione più riconoscibile per la fonte: logo brand
+ * reale (YouTube/Instagram/TikTok), favicon del dominio (articoli) o glifo
+ * duotone (documento/nota, e fallback articolo). Opzionalmente mostra il nome
+ * della fonte in mono catalogo. Colore e tinta arrivano dal tema.
  */
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useTheme, type Theme } from '@/theme';
-import { SOURCE_ICON } from '@/theme/icons';
+import {
+  ArticleGlyph,
+  DocumentGlyph,
+  InstagramLogo,
+  NoteGlyph,
+  TikTokLogo,
+  YouTubeLogo,
+} from '@/theme/icons';
 import type { SourceType } from '@/types/domain';
+import { Favicon } from './Favicon';
 
 export type SourceStampSize = 'sm' | 'md' | 'lg';
 
@@ -19,7 +29,28 @@ export interface SourceStampProps {
   showLabel?: boolean;
   /** Testo libero che sovrascrive l'etichetta di default (es. la testata). */
   label?: string;
+  /** Host del dominio (per la favicon degli articoli). */
+  host?: string | null;
   style?: StyleProp<ViewStyle>;
+}
+
+/** Sceglie la rappresentazione visiva della fonte dentro lo stamp. */
+function SourceMark({ source, size, fg, host }: { source: SourceType; size: number; fg: string; host: string | null }): JSX.Element {
+  switch (source) {
+    case 'youtube':
+      return <YouTubeLogo size={size} />;
+    case 'reel':
+      return <InstagramLogo size={size} />;
+    case 'tiktok':
+      return <TikTokLogo size={size} color={fg} />;
+    case 'article':
+      return <Favicon host={host} size={size} fallback={<ArticleGlyph size={size} color={fg} />} />;
+    case 'document':
+      return <DocumentGlyph size={size} color={fg} />;
+    case 'other':
+    default:
+      return <NoteGlyph size={size} color={fg} />;
+  }
 }
 
 const SOURCE_LABEL: Record<SourceType, string> = {
@@ -49,11 +80,10 @@ function boxSpec(theme: Theme, size: SourceStampSize): BoxSpec {
   }
 }
 
-export function SourceStamp({ source, size = 'md', showLabel = false, label, style }: SourceStampProps): JSX.Element {
+export function SourceStamp({ source, size = 'md', showLabel = false, label, host = null, style }: SourceStampProps): JSX.Element {
   const theme = useTheme();
   const s = boxSpec(theme, size);
   const { fg, soft } = theme.sourceColor(source);
-  const Icon = SOURCE_ICON[source];
 
   const stamp = (
     <View
@@ -63,7 +93,7 @@ export function SourceStamp({ source, size = 'md', showLabel = false, label, sty
         !showLabel ? style : undefined,
       ]}
     >
-      <Icon size={s.icon} color={fg} />
+      <SourceMark source={source} size={s.icon} fg={fg} host={host} />
     </View>
   );
 

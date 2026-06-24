@@ -35,6 +35,11 @@ export function extractFirstUrl(text: string | null | undefined): string | null 
   return match ? match[0] : null;
 }
 
+/** URL della favicon del dominio (servizio pubblico Google). */
+export function faviconUrl(host: string): string {
+  return `https://www.google.com/s2/favicons?sz=64&domain=${encodeURIComponent(host)}`;
+}
+
 /** True se l'URL è http/https ben formato (validazione input esterno). */
 export function isValidHttpUrl(url: string): boolean {
   try {

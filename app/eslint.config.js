@@ -8,4 +8,9 @@ module.exports = [
   {
     ignores: ['dist/*', 'node_modules/*', '.expo/*'],
   },
+  {
+    // Il setup globale dei test usa le API di Jest fuori da un file *.test.
+    files: ['jest.setup.js'],
+    languageOptions: { globals: { jest: 'readonly' } },
+  },
 ];

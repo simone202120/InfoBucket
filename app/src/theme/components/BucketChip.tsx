@@ -6,6 +6,7 @@
  */
 import { StyleSheet, Text, Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useTheme } from '@/theme';
+import { haptics } from '@/theme/haptics';
 import { CheckIcon, PlusIcon, SparkleIcon } from '@/theme/icons';
 
 export interface BucketChipProps {
@@ -50,7 +51,7 @@ export function BucketChip({ name, isNew = false, confirmed = false, onAccept, o
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={acceptLabel}
-        onPress={onAccept}
+        onPress={onAccept ? () => { haptics.light(); onAccept(); } : undefined}
         hitSlop={8}
         style={[styles.accept, { backgroundColor: acceptBg }]}
       >

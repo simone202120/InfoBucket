@@ -24,6 +24,7 @@ import {
   ErrorBanner,
   ListSkeleton,
   NoteField,
+  ScreenHeader,
   TextField,
 } from '@/theme/components';
 import { LibraryIcon, PlusIcon, XIcon } from '@/theme/icons';
@@ -44,21 +45,21 @@ export default function LibraryScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.colors.bg }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: t.gutter, paddingVertical: t.space[4] }}>
-        <Text style={{ color: t.colors.textPrimary, fontFamily: t.font.displayBold, fontSize: t.type.title.size, lineHeight: t.type.title.lh }}>
-          Libreria
-        </Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space[1] }}>
-          <Button variant="ghost" size="sm" iconLeft={<PlusIcon color={t.colors.primary} size={18} />} onPress={() => setCreating(true)}>
-            Nuovo bucket
-          </Button>
-          <AvatarMenu
-            email={user?.email ?? null}
-            onOpenSettings={() => router.push('/settings')}
-            onSignOut={() => void signOut()}
-          />
-        </View>
-      </View>
+      <ScreenHeader
+        title="Libreria"
+        right={
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space[1] }}>
+            <Button variant="ghost" size="sm" iconLeft={<PlusIcon color={t.colors.primary} size={18} />} onPress={() => setCreating(true)}>
+              Nuovo bucket
+            </Button>
+            <AvatarMenu
+              email={user?.email ?? null}
+              onOpenSettings={() => router.push('/settings')}
+              onSignOut={() => void signOut()}
+            />
+          </View>
+        }
+      />
 
       {error ? (
         <View style={{ paddingHorizontal: t.gutter }}>

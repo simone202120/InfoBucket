@@ -52,6 +52,20 @@ it('mostra le sezioni principali e l\'email dell\'utente', async () => {
   await waitFor(() => expect(getByText('Cucina')).toBeTruthy());
 });
 
+it('mostra i nuovi accenti e la voce "Personalizza" che apre il selettore', async () => {
+  const { getByLabelText, queryByLabelText } = wrap(<SettingsScreen />);
+
+  // Nuovo preset disponibile (Foresta è uno di quelli aggiunti dal Piano 2).
+  expect(getByLabelText('Accento Foresta')).toBeTruthy();
+
+  // Il selettore esadecimale compare solo dopo aver scelto "Personalizza".
+  expect(queryByLabelText('Colore esadecimale')).toBeNull();
+  fireEvent.press(getByLabelText('Accento personalizzato'));
+  expect(getByLabelText('Colore esadecimale')).toBeTruthy();
+
+  await waitFor(() => expect(getByLabelText('Accento Foresta')).toBeTruthy());
+});
+
 it('chiama signOut alla pressione di "Esci"', async () => {
   const { getByText } = wrap(<SettingsScreen />);
   fireEvent.press(getByText('Esci'));
