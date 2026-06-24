@@ -5,10 +5,10 @@
  * bucket accettabile al volo) ed expiring (countdown ambra sobrio).
  * Compone SourceStamp · StatusBadge · BucketChip · Tag.
  */
-import { useRef } from 'react';
-import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Animated, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
-import { PressableScale, useTheme, type Theme } from '@/theme';
+import { MOTION, PressableScale, useReducedMotion, useTheme, type Theme } from '@/theme';
 import { ArchiveIcon, ChevronRightIcon } from '@/theme/icons';
 import type { SourceType } from '@/types/domain';
 import { BucketChip } from './BucketChip';
@@ -80,8 +80,22 @@ export function ItemCard({
   style,
 }: ItemCardProps): JSX.Element {
   const theme = useTheme();
+  const reduced = useReducedMotion();
   const swipeRef = useRef<Swipeable>(null);
   const hasSwipe = Boolean(onArchive || onReview);
+
+  // "Draw-in" della rail: si disegna dall'alto alla comparsa, in sincrono col
+  // FadeInUp della lista. Con "riduci movimento" è già piena.
+  const railDraw = useRef(new Animated.Value(reduced ? 1 : 0)).current;
+  useEffect(() => {
+    if (reduced) {
+      railDraw.setValue(1);
+      return;
+    }
+    const anim = Animated.timing(railDraw, { toValue: 1, duration: MOTION.enter, useNativeDriver: true });
+    anim.start();
+    return () => anim.stop();
+  }, [railDraw, reduced]);
   const processing = status === 'processing';
   const expiring = status === 'expiring';
   const hasDaysLeft = typeof daysLeft === 'number';
@@ -103,11 +117,20 @@ export function ItemCard({
   const content = (
     <>
       {/* Barra di provenienza: l'elemento firma, nel colore della fonte. */}
-      <View
+      <Animated.View
         testID="provenance-rail"
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
-        style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 5, backgroundColor: theme.sourceColor(source).fg }}
+        style={{
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: 5,
+          backgroundColor: theme.sourceColor(source).fg,
+          transformOrigin: 'top',
+          transform: [{ scaleY: railDraw }],
+        }}
       />
 
       {/* Header: provenienza + stato */}
