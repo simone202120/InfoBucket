@@ -41,10 +41,16 @@ Entry: `expo-router` (cartella `app/app/`).
 |---|---|---|
 | `app/_layout.tsx` | Root: carica i font, monta `ThemeProvider`, Stack router | `@/theme`, expo-font/router |
 | `src/types/domain.ts` | **Tipi di dominio** (ItemStatus, SourceType, MediaStage, Item, Bucket). Unica fonte di verità lato client, allineata agli enum SQL | — |
-| `src/theme/tokens.ts` | Valori grezzi del design system (colori light/dark, accenti, type, spacing, radii, shadow). Porting dei `.css` | — |
-| `src/theme/index.ts` | **Adapter del tema**: `ThemeProvider`, `useTheme`, `useThemeControls`, `sourceColor()`. UNICO punto che l'app conosce per lo stile | `tokens.ts`, `types/domain.ts` |
-| `src/theme/icons.tsx` | Icone (wrapper `lucide-react-native`, default coerenti) + `SOURCE_ICON` | `types/domain.ts` |
-| `src/theme/components/*` | **Libreria UI** (RN) del design system: Button, TextField, NoteField, SourceStamp, StatusBadge, Tag, BucketChip, **BucketCard**, ItemCard, EmptyState, ErrorBanner, AddButton, **TabBar** (barra galleggiante con pill attiva che si espande), **AvatarMenu**, **ListSkeleton**, **Toast**, **TranscriptSheet**. Stile solo da `useTheme()` | `@/theme`, `icons` |
+| `src/theme/tokens.ts` | Valori grezzi del design system (temi **Cloud**/**Ink** con `scrim`, accenti incl. preset estesi, type, spacing, radii, shadow). Porting dei `.css` | — |
+| `src/theme/index.ts` | **Adapter del tema**: `ThemeProvider`, `useTheme`, `useThemeControls`, `sourceColor()`. Gestisce accento preset **o personalizzato** (via `accent.ts`) con preferenze persistite (`themeStorage.ts`). UNICO punto che l'app conosce per lo stile | `tokens.ts`, `accent.ts`, `themeStorage.ts`, `types/domain.ts` |
+| `src/theme/accent.ts` | Derivazione **pura** dell'accento personalizzato: luminanza/contrasto WCAG, varianti hover/press/soft e testo a contrasto AA | — |
+| `src/theme/themeStorage.ts` | Load/save delle preferenze tema (accento, colore custom, modo) in AsyncStorage; parsing difensivo → default | `tokens.ts` |
+| `src/theme/icons.tsx` | Icone (wrapper `lucide-react-native`) + **loghi brand reali** (YouTube/Instagram/TikTok, SVG) + **glifi duotone** (documento/nota/articolo) + `SOURCE_ICON` | `types/domain.ts`, `react-native-svg` |
+| `src/theme/components/*` | **Libreria UI** (RN) del design system: Button, TextField, NoteField, SourceStamp, StatusBadge, Tag, BucketChip, **BucketCard**, ItemCard (con **rail di provenienza**), EmptyState, ErrorBanner, AddButton, **TabBar**, **AvatarMenu**, **ListSkeleton**, **Toast**, **TranscriptSheet**, **AccentPicker**, **Favicon**, **ScreenHeader**, **Wordmark**. Stile solo da `useTheme()` | `@/theme`, `icons` |
+| `src/theme/components/AccentPicker.tsx` | Selettore di accento personalizzato (tinte rapide + campo esadecimale validato), senza dipendenze esterne | `@/theme` |
+| `src/theme/components/Favicon.tsx` | Favicon reale del dominio di un articolo (servizio Google), con fallback al glifo se manca/non carica | `@/lib/source` |
+| `src/theme/components/ScreenHeader.tsx` | Header editoriale condiviso (occhiello mono + titolo display + slot azioni), usato nelle tre tab | `@/theme` |
+| `src/theme/components/Wordmark.tsx` | Marchio InfoBucket (glifo a trattini-provenienza + logotype), usato in login e splash | `@/theme` |
 | `src/theme/ToastProvider.tsx` | Context + provider per il feedback effimero (`useToast().showToast`). Montato nel root layout; `Toast.tsx` è il componente visivo | `@/theme` |
 | `src/theme/components/Toast.tsx` | Pill di notifica effimera (messaggio + auto-dismiss); usata tramite `useToast` | `@/theme` |
 | `src/theme/components/TranscriptSheet.tsx` | Sheet a tutta pagina con trascrizione/testo completo, disponibile per tutte le fonti che espongono `raw_content` | `@/theme` |
@@ -82,7 +88,7 @@ Entry: `expo-router` (cartella `app/app/`).
 | `/search` (tab) | `app/(tabs)/search.tsx` | **Ricerca** ibrida (semantica + keyword) su saved/archived via `useSearch` → Edge Function `search` |
 | `/library` (tab) | `app/(tabs)/library.tsx` | **Libreria**: griglia di `BucketCard` (`useLibrary`), "Nuovo bucket", tap → dettaglio bucket; refetch al focus |
 | `/bucket/[id]` | `app/bucket/[id].tsx` | **Dettaglio bucket** (`useBucketDetail`): elementi salvati, tap → review |
-| `/settings` | `app/settings.tsx` | **Impostazioni** (modale): account/logout, aspetto (accento+tema), gestione bucket, ciclo di vita |
+| `/settings` | `app/settings.tsx` | **Impostazioni** (modale): account/logout, aspetto (accento preset **o personalizzato** + tema chiaro/scuro), gestione bucket, ciclo di vita |
 | `/add` | `app/add.tsx` | Modale **Aggiungi-URL** (usa `addItemByUrl`, `TextField`, `NoteField`) |
 | `/item/[id]` | `app/item/[id].tsx` | **Review/dettaglio** item (monta `ReviewScreen`): legge `id` dall'URL |
 | `/archive` | `app/archive.tsx` | **Archivio**: item decaduti, recuperabili salvandoli in un bucket (§10) |
@@ -178,8 +184,10 @@ della riga `items` (`mappers.ts` ↔ schema).
   `items-mutations`, `buckets`), hook (`useInbox`, `useArchive`, `useSearch`,
   `useItemDetail`, `usePolling`, `useFocusRefetch`), auth (`AuthContext`), `ReviewScreen`,
   libreria componenti UI (incl. `AvatarMenu`, `ListSkeleton`, `Toast`, `TranscriptSheet`,
-  `ToastProvider`), schermata `add`, Libreria/dettaglio bucket, Impostazioni, BucketCard, motion.
-  `npm test` → **140 verdi** (36 suite), `typecheck` e `lint` puliti.
+  `ToastProvider`, `AccentPicker`, `Favicon`, `ScreenHeader`, `Wordmark`, rail di `ItemCard`),
+  tema (`accent`, `themeStorage`, `scrim`, accento personalizzato persistito),
+  schermata `add`, Libreria/dettaglio bucket, Impostazioni, BucketCard, motion.
+  `npm test` → **160 verdi** (44 suite), `typecheck` e `lint` puliti.
 - `worker/`: Vitest — `composeRawContent`, parser caption, estrazione media
   (`media`, inclusi i cookie yt-dlp), validazione env (`env`), loop di polling
   (`index`). `npm test` → **57 verdi** (5 file).
