@@ -1,18 +1,26 @@
 import { useRouter } from 'expo-router';
-import { FlatList, Pressable, RefreshControl, View } from 'react-native';
+import { useMemo } from 'react';
+import { Pressable, RefreshControl, SectionList, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusRefetch } from '@/features/useFocusRefetch';
 import { usePolling } from '@/features/usePolling';
 import { useInbox } from '@/features/inbox/useInbox';
+import { groupInbox } from '@/features/inbox/groupInbox';
 import { archiveItem } from '@/lib/items';
 import { daysLeft, isExpiring } from '@/lib/lifecycle';
 import { hostnameOf } from '@/lib/source';
 import { useAuth } from '@/features/auth';
-import { FadeInUp, staggerDelay, useTheme, useToast } from '@/theme';
+import { FadeInUp, staggerDelay, useTheme, type Theme, useToast } from '@/theme';
 import { haptics } from '@/theme/haptics';
 import { AvatarMenu, EmptyState, ErrorBanner, ItemCard, ListSkeleton, ScreenHeader, type ProposedBucket } from '@/theme/components';
 import { ArchiveIcon, InboxIcon } from '@/theme/icons';
 import type { Item } from '@/types/domain';
+
+interface InboxSection {
+  title: string;
+  data: Item[];
+  first: boolean;
+}
 
 export default function InboxScreen() {
   const t = useTheme();
@@ -35,6 +43,15 @@ export default function InboxScreen() {
       showToast({ message: 'Impossibile archiviare. Riprova.' });
     }
   };
+
+  // Due sezioni: prima ciò che sta per decadere, poi il resto. Le vuote spariscono.
+  const sections = useMemo<InboxSection[]>(() => {
+    const { expiring, recent } = groupInbox(items);
+    const out: InboxSection[] = [];
+    if (expiring.length > 0) out.push({ title: 'In scadenza', data: expiring, first: true });
+    if (recent.length > 0) out.push({ title: 'Recenti', data: recent, first: out.length === 0 });
+    return out;
+  }, [items]);
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.colors.bg }}>
@@ -66,11 +83,15 @@ export default function InboxScreen() {
           <ListSkeleton />
         </View>
       ) : (
-        <FlatList
-          data={items}
+        <SectionList
+          sections={sections}
           keyExtractor={(it) => it.id}
           contentContainerStyle={{ padding: t.gutter, gap: t.space[4], flexGrow: 1 }}
+          stickySectionHeadersEnabled={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refetch} tintColor={t.colors.primary} />}
+          renderSectionHeader={({ section }) => (
+            <SectionHeader title={(section as InboxSection).title} first={(section as InboxSection).first} theme={t} />
+          )}
           renderItem={({ item, index }) => (
             <FadeInUp delay={staggerDelay(index)}>
               <InboxItem
@@ -92,6 +113,24 @@ export default function InboxScreen() {
         />
       )}
     </SafeAreaView>
+  );
+}
+
+/** Occhiello mono di sezione (stesso linguaggio dell'header). */
+function SectionHeader({ title, first, theme }: { title: string; first: boolean; theme: Theme }): JSX.Element {
+  return (
+    <Text
+      style={{
+        marginTop: first ? 0 : theme.space[3],
+        fontFamily: theme.font.mono,
+        fontSize: theme.type.meta.size,
+        letterSpacing: theme.type.meta.size * theme.type.meta.tracking,
+        textTransform: 'uppercase',
+        color: theme.colors.textTertiary,
+      }}
+    >
+      {title}
+    </Text>
   );
 }
 
