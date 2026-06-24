@@ -194,6 +194,8 @@ function ReviewBody({
   const [newTag, setNewTag] = useState('');
   // Apertura dello sheet con testo/trascrizione completa.
   const [sheetOpen, setSheetOpen] = useState(false);
+  // Lettura immersiva di default; si passa a "edit" per modificare.
+  const [mode, setMode] = useState<'read' | 'edit'>('read');
 
   useEffect(() => {
     setSummary(item.summary ?? '');
@@ -224,7 +226,16 @@ function ReviewBody({
 
   const removeTag = (tag: string) => setTags((prev) => prev.filter((it) => it !== tag));
 
-  const saveEdits = () => void onSave({ summary, note, tags });
+  // "Fatto": salva le eventuali modifiche e torna alla lettura (se il salvataggio
+  // riesce). Senza modifiche, torna subito in lettura.
+  const finishEditing = async () => {
+    if (!dirty) {
+      setMode('read');
+      return;
+    }
+    const ok = await onSave({ summary, note, tags });
+    if (ok) setMode('read');
+  };
 
   const confirmRemove = () => {
     Alert.alert(
@@ -291,86 +302,97 @@ function ReviewBody({
           ) : null}
         </View>
 
-        {/* Riassunto — l'eroe, modificabile */}
-        <Field label="Riassunto">
-          <View
-            style={{
-              backgroundColor: t.colors.surface,
-              borderColor: t.colors.borderStrong,
-              borderWidth: 1.5,
-              borderRadius: t.radius.sm,
-              padding: t.space[4],
-            }}
-          >
-            <TextInput
-              accessibilityLabel="Riassunto"
-              value={summary}
-              onChangeText={setSummary}
-              placeholder="Scrivi un riassunto, o rigenera per proporne uno."
-              placeholderTextColor={t.colors.textTertiary}
-              multiline
-              textAlignVertical="top"
-              style={{
-                minHeight: t.type.read.lh * 3,
-                fontFamily: t.font.read,
-                fontSize: t.type.read.size,
-                lineHeight: t.type.read.lh,
-                color: t.colors.textPrimary,
-              }}
-            />
-          </View>
-        </Field>
+        {mode === 'read' ? (
+          <ReadingView
+            summary={summary}
+            tags={tags}
+            onEdit={() => setMode('edit')}
+            theme={t}
+          />
+        ) : (
+          <>
+            {/* Riassunto — l'eroe, modificabile */}
+            <Field label="Riassunto">
+              <View
+                style={{
+                  backgroundColor: t.colors.surface,
+                  borderColor: t.colors.borderStrong,
+                  borderWidth: 1.5,
+                  borderRadius: t.radius.sm,
+                  padding: t.space[4],
+                }}
+              >
+                <TextInput
+                  accessibilityLabel="Riassunto"
+                  value={summary}
+                  onChangeText={setSummary}
+                  placeholder="Scrivi un riassunto, o rigenera per proporne uno."
+                  placeholderTextColor={t.colors.textTertiary}
+                  multiline
+                  textAlignVertical="top"
+                  style={{
+                    minHeight: t.type.read.lh * 3,
+                    fontFamily: t.font.read,
+                    fontSize: t.type.read.size,
+                    lineHeight: t.type.read.lh,
+                    color: t.colors.textPrimary,
+                  }}
+                />
+              </View>
+            </Field>
 
-        {/* Tag modificabili */}
-        <Field label="Tag">
-          {tags.length > 0 ? (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: t.space[3], marginBottom: t.space[3] }}>
-              {tags.map((tag) => (
-                <Tag key={tag} removable onRemove={() => removeTag(tag)}>
-                  {tag}
-                </Tag>
-              ))}
+            {/* Tag modificabili */}
+            <Field label="Tag">
+              {tags.length > 0 ? (
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: t.space[3], marginBottom: t.space[3] }}>
+                  {tags.map((tag) => (
+                    <Tag key={tag} removable onRemove={() => removeTag(tag)}>
+                      {tag}
+                    </Tag>
+                  ))}
+                </View>
+              ) : null}
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: t.space[3] }}>
+                <View style={{ flex: 1 }}>
+                  <TextField
+                    value={newTag}
+                    onChangeText={setNewTag}
+                    placeholder="Aggiungi un tag"
+                    autoCapitalize="none"
+                  />
+                </View>
+                <Button
+                  variant="secondary"
+                  onPress={addTag}
+                  disabled={!newTag.trim()}
+                  iconLeft={<PlusIcon size={18} color={t.colors.textPrimary} />}
+                  accessibilityLabel="Aggiungi un tag"
+                >
+                  Aggiungi
+                </Button>
+              </View>
+            </Field>
+
+            {/* Nota modificabile */}
+            <NoteField label="Nota" value={note} onChangeText={setNote} placeholder="Perché lo salvi? (opzionale)" />
+
+            {/* Fatto (salva e torna in lettura) + Rigenera */}
+            <View style={{ flexDirection: 'row', gap: t.space[4] }}>
+              <Button onPress={() => void finishEditing()} disabled={saving} accessibilityLabel="Fatto">
+                {saving ? 'Salvataggio…' : 'Fatto'}
+              </Button>
+              <Button
+                variant="secondary"
+                onPress={() => void onRegenerate()}
+                disabled={regenerating}
+                iconLeft={<RefreshIcon size={18} color={t.colors.textPrimary} />}
+                accessibilityLabel="Rigenera con l'AI"
+              >
+                {regenerating ? 'Rigenero…' : 'Rigenera'}
+              </Button>
             </View>
-          ) : null}
-          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: t.space[3] }}>
-            <View style={{ flex: 1 }}>
-              <TextField
-                value={newTag}
-                onChangeText={setNewTag}
-                placeholder="Aggiungi un tag"
-                autoCapitalize="none"
-              />
-            </View>
-            <Button
-              variant="secondary"
-              onPress={addTag}
-              disabled={!newTag.trim()}
-              iconLeft={<PlusIcon size={18} color={t.colors.textPrimary} />}
-              accessibilityLabel="Aggiungi un tag"
-            >
-              Aggiungi
-            </Button>
-          </View>
-        </Field>
-
-        {/* Nota modificabile */}
-        <NoteField label="Nota" value={note} onChangeText={setNote} placeholder="Perché lo salvi? (opzionale)" />
-
-        {/* Salva modifiche + Rigenera */}
-        <View style={{ flexDirection: 'row', gap: t.space[4] }}>
-          <Button onPress={saveEdits} disabled={!dirty || saving} accessibilityLabel="Salva le modifiche">
-            {saving ? 'Salvataggio…' : 'Salva'}
-          </Button>
-          <Button
-            variant="secondary"
-            onPress={() => void onRegenerate()}
-            disabled={regenerating}
-            iconLeft={<RefreshIcon size={18} color={t.colors.textPrimary} />}
-            accessibilityLabel="Rigenera con l'AI"
-          >
-            {regenerating ? 'Rigenero…' : 'Rigenera'}
-          </Button>
-        </View>
+          </>
+        )}
 
         {hasText ? (
           <Button
@@ -503,6 +525,54 @@ function ConfirmBucket({ item, buckets, confirming, onConfirm }: ConfirmBucketPr
           Crea un nuovo bucket
         </Button>
       )}
+    </View>
+  );
+}
+
+/**
+ * Vista di lettura immersiva: il riassunto è una citazione grande (Newsreader),
+ * i tag in sola lettura, e un'azione "Modifica" passa alla UI editabile. Le
+ * azioni principali (Salva in bucket, Apri testo, Elimina) restano sotto.
+ */
+function ReadingView({
+  summary,
+  tags,
+  onEdit,
+  theme: t,
+}: {
+  summary: string;
+  tags: readonly string[];
+  onEdit: () => void;
+  theme: Theme;
+}): JSX.Element {
+  const hasSummary = summary.trim().length > 0;
+  return (
+    <View style={{ gap: t.space[5] }}>
+      <Text
+        accessibilityLabel="Riassunto"
+        style={{
+          fontFamily: t.font.read,
+          fontSize: t.type.readLg.size,
+          lineHeight: t.type.readLg.lh,
+          color: hasSummary ? t.colors.textPrimary : t.colors.textTertiary,
+        }}
+      >
+        {hasSummary ? summary : 'Nessun riassunto. Tocca Modifica per scriverne uno o rigeneralo con l’AI.'}
+      </Text>
+
+      {tags.length > 0 ? (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: t.space[3] }}>
+          {tags.map((tag) => (
+            <Tag key={tag}>{tag}</Tag>
+          ))}
+        </View>
+      ) : null}
+
+      <View style={{ flexDirection: 'row' }}>
+        <Button variant="ghost" onPress={onEdit} accessibilityLabel="Modifica">
+          Modifica
+        </Button>
+      </View>
     </View>
   );
 }
