@@ -82,6 +82,8 @@ export function ItemCard({
       borderRadius: theme.radius.lg,
       borderColor: expiring ? theme.colors.status.expiringSoft : theme.colors.border,
       padding: theme.gutter,
+      // Spazio extra a sinistra per la barra di provenienza (rail), che è absolute.
+      paddingLeft: theme.gutter + theme.space[2],
     },
     theme.shadow.sm,
     style,
@@ -89,6 +91,14 @@ export function ItemCard({
 
   const content = (
     <>
+      {/* Barra di provenienza: l'elemento firma, nel colore della fonte. */}
+      <View
+        testID="provenance-rail"
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 5, backgroundColor: theme.sourceColor(source).fg }}
+      />
+
       {/* Header: provenienza + stato */}
       <View style={styles.header}>
         <SourceStamp source={source} size="md" />
@@ -177,7 +187,7 @@ export function ItemCard({
 }
 
 const styles = StyleSheet.create({
-  card: { borderWidth: 1 },
+  card: { borderWidth: 1, overflow: 'hidden' },
   header: { flexDirection: 'row', alignItems: 'center', gap: 11, marginBottom: 12 },
   headerMeta: { flex: 1, minWidth: 0 },
   skeleton: { gap: 8, marginTop: 4, marginBottom: 14 },

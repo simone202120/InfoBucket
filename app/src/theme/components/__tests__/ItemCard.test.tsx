@@ -59,4 +59,12 @@ describe('ItemCard', () => {
     fireEvent.press(getByRole('button'));
     expect(onPress).toHaveBeenCalledTimes(1);
   });
+
+  it('mostra la barra di provenienza nel colore della fonte', () => {
+    const { getByTestId } = renderInTheme(<ItemCard source="youtube" summary={SUMMARY} onPress={() => {}} />);
+    // La rail è nascosta all'accessibilità (decorativa): includila esplicitamente.
+    const rail = getByTestId('provenance-rail', { includeHiddenElements: true });
+    const style = Array.isArray(rail.props.style) ? Object.assign({}, ...rail.props.style) : rail.props.style;
+    expect(style.backgroundColor).toBeDefined();
+  });
 });
