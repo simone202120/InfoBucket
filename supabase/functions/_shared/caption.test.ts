@@ -7,7 +7,9 @@ import {
   fetchLightCaption,
   parseOpenGraph,
   parseTiktokOembed,
+  parseYoutubeOembed,
   tiktokOembedUrl,
+  youtubeOembedUrl,
 } from "./caption.ts";
 
 Deno.test("parseTiktokOembed: caption da title, autore da unique id", () => {
@@ -69,4 +71,36 @@ Deno.test("fetchLightCaption: degrada a EMPTY se la rete/parse fallisce", async 
   const fetchText = (): Promise<string> => Promise.reject(new Error("rete giù"));
   const meta = await fetchLightCaption("tiktok", "https://vm.tiktok.com/abc/", fetchText);
   assertEquals(meta, { caption: null, author: null });
+});
+
+Deno.test("parseYoutubeOembed: caption da title, autore dal canale", () => {
+  const meta = parseYoutubeOembed({
+    title: "  Come funziona X  ",
+    author_name: "Canale Tech",
+    author_url: "https://youtube.com/@canaletech",
+  });
+  assertEquals(meta, { caption: "Come funziona X", author: "Canale Tech" });
+});
+
+Deno.test("parseYoutubeOembed: input non oggetto → EMPTY", () => {
+  assertEquals(parseYoutubeOembed(null), { caption: null, author: null });
+  assertEquals(parseYoutubeOembed("stringa"), { caption: null, author: null });
+});
+
+Deno.test("youtubeOembedUrl: codifica l'URL fonte e forza il formato json", () => {
+  assertEquals(
+    youtubeOembedUrl("https://youtu.be/abc"),
+    "https://www.youtube.com/oembed?url=https%3A%2F%2Fyoutu.be%2Fabc&format=json",
+  );
+});
+
+Deno.test("fetchLightCaption: youtube → interroga l'oEmbed e ne fa il parse", async () => {
+  let requested: string | null = null;
+  const fetchText = (url: string): Promise<string> => {
+    requested = url;
+    return Promise.resolve(JSON.stringify({ title: "Video", author_name: "Canale" }));
+  };
+  const meta = await fetchLightCaption("youtube", "https://youtu.be/abc", fetchText);
+  assertEquals(meta, { caption: "Video", author: "Canale" });
+  assertEquals(requested, youtubeOembedUrl("https://youtu.be/abc"));
 });

@@ -125,7 +125,7 @@ directory su EAS va impostata a `app`.
 | `migrations/0005_dispatch_trigger.sql` | Innesco automatico: trigger AFTER INSERT su `items` (`status='processing'`) → chiama `dispatch` via `pg_net`; sweep pg_cron (2 min) ridispaccia gli item non instradati. Service role letta dal **Vault** (`project_functions_url`, `service_role_key`), non hardcodata |
 | `migrations/0006_buckets_dedup.sql` | Deduplica i bucket (fonde i doppioni sul più vecchio), indice unico `(user_id, lower(name))`, vista `bucket_overview` (conteggio + fonti, `security_invoker`) per la Libreria |
 | `functions/_shared/source-type.ts` | Rilevamento `source_type` (autorevole, lato server) — gemello puro di `app/src/lib/source.ts` |
-| `functions/_shared/caption.ts` | Estrazione caption tiktok/reel (oEmbed/Open Graph) + `composeCaptionRawContent` — gemello puro di `worker/src/extract/caption.ts`. Dà il riassunto da didascalia senza worker né login |
+| `functions/_shared/caption.ts` | Estrazione caption tiktok/reel/**youtube** (oEmbed/Open Graph) + `composeCaptionRawContent` — gemello puro di `worker/src/extract/caption.ts`. Dà il riassunto da didascalia senza worker né login |
 | `functions/_shared/model-output.ts` | Parsing/validazione dell'output JSON del modello (input **non fidato**) |
 | `functions/_shared/ai.ts` | Costruzione prompt + chiamate OpenRouter (chat) e OpenAI (`embed`) |
 | `functions/_shared/text.ts` | Normalizzazione/troncamento testo, html→testo |
@@ -135,7 +135,7 @@ directory su EAS va impostata a `app`.
 | `functions/_shared/fetch-remote.ts` | Fetch difensivo (timeout/limiti, fetcher iniettabile) |
 | `functions/_shared/invoke.ts` | Invocazione function→function (es. dispatch → generate) con service role |
 | `functions/_shared/{cors,supabase}.ts` | Helper CORS + client service role / user (inoltra JWT) |
-| `functions/dispatch/index.ts` | Instrada un item: percorso leggero (article/document/yt-transcript, **e caption tiktok/reel via oEmbed/OG**) → estrae `raw_content` inline e chiama `generate`; per tiktok/reel accoda anche il media (`queueMedia` → `media_stage='pending'`) per la trascrizione. Solo yt-senza-transcript va dritto al worker. Scarica i documenti dal bucket Storage `documents` |
+| `functions/dispatch/index.ts` | Instrada un item: percorso leggero (article/document/yt-transcript, **e caption tiktok/reel/youtube via oEmbed/OG**) → estrae `raw_content` inline e chiama `generate`; per tiktok/reel/youtube-da-caption accoda anche il media (`queueMedia` → `media_stage='pending'`) per la trascrizione. Solo yt senza transcript né caption oEmbed va dritto al worker. Scarica i documenti dal bucket Storage `documents` |
 | `functions/generate/index.ts` | Cuore AI: OpenRouter (summary/tag/bucket) + OpenAI embedding → `ready`. Idempotente (riusata per la rigenerazione). Errori non fanno sparire l'item |
 | `functions/search/index.ts` | Ricerca user-scoped: genera l'embedding query (OpenAI) e invoca la RPC `search_items` nel contesto utente (JWT → RLS). `verify_jwt=true` |
 | `.env.example`, `config.toml`, `README.md` | Secrets (placeholder), config CLI (incl. `verify_jwt` per function), istruzioni + setup Vault |
@@ -192,6 +192,6 @@ della riga `items` (`mappers.ts` ↔ schema).
   (`media`, inclusi i cookie yt-dlp), validazione env (`env`), loop di polling
   (`index`). `npm test` → **57 verdi** (5 file).
 - `supabase/functions/`: `deno test --no-check` — detection, validazione output modello,
-  estrazione (article/document/youtube), **caption tiktok/reel**, text, fetch-remote, ai,
+  estrazione (article/document/youtube), **caption tiktok/reel/youtube** (oEmbed), text, fetch-remote, ai,
   parsing search. (Type-check completo solo sul runtime Deno di Supabase; in locale la
   config `lib` non copre il DOM di `extract-article`.)

@@ -19,7 +19,7 @@ export interface CaptionMetadata {
 }
 
 /** Tipi-fonte la cui caption si estrae via HTTP leggero (senza yt-dlp). */
-export type LightCaptionType = "tiktok" | "reel";
+export type LightCaptionType = "tiktok" | "reel" | "youtube";
 
 const EMPTY: CaptionMetadata = { caption: null, author: null };
 
@@ -50,6 +50,22 @@ export function parseTiktokOembed(json: unknown): CaptionMetadata {
   const author = handle ? `@${handle}` : name;
 
   return { caption, author };
+}
+
+/** URL ufficiale oEmbed di YouTube per una data fonte. */
+export function youtubeOembedUrl(sourceUrl: string): string {
+  return `https://www.youtube.com/oembed?url=${encodeURIComponent(sourceUrl)}&format=json`;
+}
+
+/**
+ * Parsing della risposta oEmbed di YouTube. Funzione PURA.
+ * Formato atteso: `{ title, author_name, ... }`. Diversamente da TikTok non c'è
+ * un handle: l'autore è il nome del canale.
+ */
+export function parseYoutubeOembed(json: unknown): CaptionMetadata {
+  if (json === null || typeof json !== "object") return EMPTY;
+  const obj = json as Record<string, unknown>;
+  return { caption: nullable(obj.title), author: nullable(obj.author_name) };
 }
 
 /**
@@ -146,6 +162,12 @@ export async function fetchLightCaption(
     if (sourceType === "tiktok") {
       const body = await fetchText(tiktokOembedUrl(sourceUrl));
       return parseTiktokOembed(JSON.parse(body));
+    }
+    if (sourceType === "youtube") {
+      // oEmbed pubblico di YouTube: titolo + canale, senza chiavi né login. Dà un
+      // riassunto utile SUBITO quando il transcript pubblico non è disponibile.
+      const body = await fetchText(youtubeOembedUrl(sourceUrl));
+      return parseYoutubeOembed(JSON.parse(body));
     }
     // reel (Instagram): best-effort via Open Graph della pagina pubblica.
     const html = await fetchText(sourceUrl);
