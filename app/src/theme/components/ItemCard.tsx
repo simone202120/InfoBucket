@@ -101,7 +101,7 @@ export function ItemCard({
 
       {/* Header: provenienza + stato */}
       <View style={styles.header}>
-        <SourceStamp source={source} size="md" />
+        <SourceStamp source={source} size="md" host={sourceName ?? null} />
         <View style={styles.headerMeta}>
           <Text
             numberOfLines={1}

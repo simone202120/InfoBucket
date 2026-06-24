@@ -20,3 +20,4 @@ export { TranscriptSheet, type TranscriptSheetProps } from './TranscriptSheet';
 export { AvatarMenu, type AvatarMenuProps } from './AvatarMenu';
 export { ListSkeleton, type ListSkeletonProps } from './ListSkeleton';
 export { AccentPicker, type AccentPickerProps } from './AccentPicker';
+export { Favicon, type FaviconProps } from './Favicon';

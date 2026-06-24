@@ -260,6 +260,7 @@ function ReviewBody({
               size="md"
               showLabel
               label={sourceName(item)}
+              host={item.sourceUrl ? hostnameOf(item.sourceUrl) : null}
               style={{ flexShrink: 1 }}
             />
             <StatusBadge status={badgeStatus(item.status)} />
