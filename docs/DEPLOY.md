@@ -8,11 +8,15 @@ I segreti vivono SOLO lato server (Edge Functions secrets + env della VPS), MAI 
 repo o nel client (CLAUDE.md §3).
 
 > [!IMPORTANT]
-> **Deploy pendente — function `dispatch` (fix YouTube).** Il branch `piano-spec-2`
-> aggiunge a `dispatch` un fallback caption oEmbed per YouTube: senza transcript
-> pubblico ora ricava titolo+canale e propone subito un riassunto (prima YouTube
-> dipendeva interamente dal worker e poteva restare "senza contenuto"). **Il fix ha
-> effetto solo dopo aver ridistribuito la function**:
+> **Deploy pendente — function `dispatch` (fix YouTube).** Il branch
+> `claude/link-comments-youtube-issues-3zlztt` riscrive l'estrazione YouTube
+> (`_shared/youtube.ts`): nel percorso leggero ricava **titolo + descrizione +
+> canale** via **InnerTube** (con fallback pagina watch e oEmbed) e tenta la
+> trascrizione dai sottotitoli pubblici. Prima YouTube dipendeva dal solo scraping
+> della pagina watch (che dagli IP cloud fallisce) e dall'oEmbed (solo titolo+canale,
+> mai la descrizione), e poteva restare "senza contenuto" o bloccato in inbox.
+> `dispatch` ora compone il contenuto ricco e chiama **sempre** `generate`. **Il fix
+> ha effetto solo dopo aver ridistribuito la function**:
 > `supabase functions deploy dispatch`.
 > Togli questa nota una volta fatto il deploy.
 
@@ -31,7 +35,8 @@ supabase functions deploy dispatch  # ridistribuisci la function cambiata
 
 I secrets (`OPENROUTER_API_KEY`, `OPENAI_API_KEY`, ecc.) si impostano una volta con
 `supabase secrets set` e restano. `dispatch` non richiede nuovi secret: l'estrazione
-caption (oEmbed TikTok / Open Graph) è una semplice GET pubblica.
+caption (oEmbed TikTok / Open Graph) e quella YouTube (InnerTube / oEmbed) usano solo
+chiamate pubbliche, senza chiavi (la chiave InnerTube è quella pubblica del web player).
 
 ---
 
