@@ -1,4 +1,4 @@
-import { confirmItem, deleteItem, getItem, ItemsError, regenerate, updateItem } from '../items';
+import { archiveItem, confirmItem, deleteItem, getItem, ItemsError, regenerate, updateItem } from '../items';
 import { supabase } from '../supabase';
 import type { ItemRow } from '../mappers';
 
@@ -57,6 +57,21 @@ it('confirmItem imposta bucket, stato saved e confirmed_at', async () => {
   expect(patch).toMatchObject({ bucket_id: 'b1', status: 'saved' });
   expect(typeof patch.confirmed_at).toBe('string');
   expect(item.status).toBe('saved');
+});
+
+it('archiveItem imposta lo stato archived e la data', async () => {
+  const qb = makeQB({ data: { ...row, status: 'archived', archived_at: '2026-06-24T10:00:00Z' }, error: null });
+  fromMock.mockReturnValue(qb);
+  const item = await archiveItem('i1');
+  const patch = (qb.update as jest.Mock).mock.calls[0][0];
+  expect(patch).toMatchObject({ status: 'archived' });
+  expect(typeof patch.archived_at).toBe('string');
+  expect(item.status).toBe('archived');
+});
+
+it('archiveItem lancia in caso di errore', async () => {
+  fromMock.mockReturnValue(makeQB({ data: null, error: { message: 'boom' } }));
+  await expect(archiveItem('i1')).rejects.toBeInstanceOf(ItemsError);
 });
 
 it('deleteItem lancia in caso di errore', async () => {

@@ -4,10 +4,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusRefetch } from '@/features/useFocusRefetch';
 import { usePolling } from '@/features/usePolling';
 import { useInbox } from '@/features/inbox/useInbox';
+import { archiveItem } from '@/lib/items';
 import { daysLeft, isExpiring } from '@/lib/lifecycle';
 import { hostnameOf } from '@/lib/source';
 import { useAuth } from '@/features/auth';
-import { FadeInUp, staggerDelay, useTheme } from '@/theme';
+import { FadeInUp, staggerDelay, useTheme, useToast } from '@/theme';
+import { haptics } from '@/theme/haptics';
 import { AvatarMenu, EmptyState, ErrorBanner, ItemCard, ListSkeleton, ScreenHeader, type ProposedBucket } from '@/theme/components';
 import { ArchiveIcon, InboxIcon } from '@/theme/icons';
 import type { Item } from '@/types/domain';
@@ -16,11 +18,23 @@ export default function InboxScreen() {
   const t = useTheme();
   const router = useRouter();
   const { user, signOut } = useAuth();
+  const { showToast } = useToast();
   const { items, loading, refreshing, error, refetch } = useInbox();
   useFocusRefetch(refetch);
   usePolling(refetch, { active: items.some((it) => it.status === 'processing') });
 
   const openAdd = () => router.push('/add');
+
+  /** Archivia dallo swipe: feedback aptico, poi ricarica. Errore → toast, dati salvi. */
+  const archive = async (id: string) => {
+    try {
+      await archiveItem(id);
+      haptics.success();
+      await refetch();
+    } catch {
+      showToast({ message: 'Impossibile archiviare. Riprova.' });
+    }
+  };
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.colors.bg }}>
@@ -59,7 +73,11 @@ export default function InboxScreen() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refetch} tintColor={t.colors.primary} />}
           renderItem={({ item, index }) => (
             <FadeInUp delay={staggerDelay(index)}>
-              <InboxItem item={item} onPress={() => router.push(`/item/${item.id}`)} />
+              <InboxItem
+                item={item}
+                onPress={() => router.push(`/item/${item.id}`)}
+                onArchive={() => void archive(item.id)}
+              />
             </FadeInUp>
           )}
           ListEmptyComponent={
@@ -78,7 +96,7 @@ export default function InboxScreen() {
 }
 
 /** Mappa un Item di dominio sulla ItemCard. */
-function InboxItem({ item, onPress }: { item: Item; onPress: () => void }) {
+function InboxItem({ item, onPress, onArchive }: { item: Item; onPress: () => void; onArchive: () => void }) {
   const status = item.status === 'processing' ? 'processing' : isExpiring(item) ? 'expiring' : 'ready';
   const left = daysLeft(item) ?? undefined;
   const proposed: ProposedBucket | undefined = item.suggestedBucketName
@@ -95,6 +113,8 @@ function InboxItem({ item, onPress }: { item: Item; onPress: () => void }) {
       proposedBucket={proposed}
       daysLeft={status === 'expiring' ? left : undefined}
       onPress={onPress}
+      onArchive={onArchive}
+      onReview={onPress}
     />
   );
 }

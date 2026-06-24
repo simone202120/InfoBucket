@@ -118,6 +118,18 @@ export async function confirmItem(id: string, bucketId: string): Promise<Item> {
   return toItem(data as ItemRow);
 }
 
+/** Sposta l'item in archivio (decadimento manuale dalla Inbox, §10). */
+export async function archiveItem(id: string): Promise<Item> {
+  const { data, error } = await supabase
+    .from('items')
+    .update({ status: 'archived', archived_at: new Date().toISOString() })
+    .eq('id', id)
+    .select('*')
+    .single();
+  if (error || !data) throw new ItemsError('Impossibile archiviare l\'elemento.');
+  return toItem(data as ItemRow);
+}
+
 export async function deleteItem(id: string): Promise<void> {
   const { error } = await supabase.from('items').delete().eq('id', id);
   if (error) throw new ItemsError('Impossibile eliminare l\'elemento.');

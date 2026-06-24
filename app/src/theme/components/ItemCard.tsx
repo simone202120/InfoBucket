@@ -5,8 +5,11 @@
  * bucket accettabile al volo) ed expiring (countdown ambra sobrio).
  * Compone SourceStamp · StatusBadge · BucketChip · Tag.
  */
-import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { useRef } from 'react';
+import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Swipeable } from 'react-native-gesture-handler';
 import { PressableScale, useTheme, type Theme } from '@/theme';
+import { ArchiveIcon, ChevronRightIcon } from '@/theme/icons';
 import type { SourceType } from '@/types/domain';
 import { BucketChip } from './BucketChip';
 import { SourceStamp } from './SourceStamp';
@@ -32,6 +35,10 @@ export interface ItemCardProps {
   daysLeft?: number;
   onAccept?: () => void;
   onPress?: () => void;
+  /** Azione swipe a sinistra: archivia l'elemento. Se assente, niente swipe archivio. */
+  onArchive?: () => void;
+  /** Azione swipe a destra: apre la revisione. Se assente, niente swipe rivedi. */
+  onReview?: () => void;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -68,9 +75,13 @@ export function ItemCard({
   daysLeft,
   onAccept,
   onPress,
+  onArchive,
+  onReview,
   style,
 }: ItemCardProps): JSX.Element {
   const theme = useTheme();
+  const swipeRef = useRef<Swipeable>(null);
+  const hasSwipe = Boolean(onArchive || onReview);
   const processing = status === 'processing';
   const expiring = status === 'expiring';
   const hasDaysLeft = typeof daysLeft === 'number';
@@ -176,14 +187,100 @@ export function ItemCard({
     </>
   );
 
-  if (onPress) {
-    return (
-      <PressableScale accessibilityRole="button" onPress={onPress} style={cardStyle}>
-        {content}
-      </PressableScale>
-    );
-  }
-  return <View style={cardStyle}>{content}</View>;
+  const card = onPress ? (
+    <PressableScale accessibilityRole="button" onPress={onPress} style={cardStyle}>
+      {content}
+    </PressableScale>
+  ) : (
+    <View style={cardStyle}>{content}</View>
+  );
+
+  if (!hasSwipe) return card;
+
+  // Lo swipe è una scorciatoia: le stesse azioni restano raggiungibili altrove
+  // (tap sulla card per rivedere, Archivio dall'header). I bottoni-azione sono
+  // accessibili e ≥44pt; al tap chiudono la riga.
+  const close = () => swipeRef.current?.close();
+  return (
+    <Swipeable
+      ref={swipeRef}
+      friction={2}
+      overshootLeft={false}
+      overshootRight={false}
+      renderLeftActions={
+        onArchive
+          ? () => (
+              <SwipeAction
+                label="Archivia"
+                icon={<ArchiveIcon size={20} color={theme.colors.status.archived} />}
+                background={theme.colors.status.archivedSoft}
+                align="flex-start"
+                onPress={() => {
+                  close();
+                  onArchive();
+                }}
+              />
+            )
+          : undefined
+      }
+      renderRightActions={
+        onReview
+          ? () => (
+              <SwipeAction
+                label="Rivedi"
+                icon={<ChevronRightIcon size={20} color={theme.colors.primary} />}
+                background={theme.colors.primarySoft}
+                align="flex-end"
+                onPress={() => {
+                  close();
+                  onReview();
+                }}
+              />
+            )
+          : undefined
+      }
+    >
+      {card}
+    </Swipeable>
+  );
+}
+
+/** Bottone-azione rivelato dallo swipe della card. Accessibile, ≥44pt. */
+function SwipeAction({
+  label,
+  icon,
+  background,
+  align,
+  onPress,
+}: {
+  label: string;
+  icon: JSX.Element;
+  background: string;
+  align: 'flex-start' | 'flex-end';
+  onPress: () => void;
+}): JSX.Element {
+  const theme = useTheme();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={{
+        flex: 1,
+        minWidth: 96,
+        backgroundColor: background,
+        borderRadius: theme.radius.lg,
+        marginVertical: 0,
+        paddingHorizontal: theme.gutter,
+        alignItems: align,
+        justifyContent: 'center',
+        gap: theme.space[1],
+      }}
+    >
+      {icon}
+      <Text style={metaTextStyle(theme, theme.colors.textSecondary)}>{label}</Text>
+    </Pressable>
+  );
 }
 
 const styles = StyleSheet.create({
