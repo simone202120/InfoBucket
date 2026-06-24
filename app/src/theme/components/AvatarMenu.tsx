@@ -46,7 +46,7 @@ export function AvatarMenu({ email, onOpenSettings, onSignOut }: AvatarMenuProps
       </Pressable>
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        <Pressable style={styles.backdrop} onPress={() => setOpen(false)} accessibilityLabel="Chiudi il menu">
+        <Pressable style={[styles.backdrop, { backgroundColor: t.colors.scrim + '33' }]} onPress={() => setOpen(false)} accessibilityLabel="Chiudi il menu">
           <View style={[styles.sheet, { backgroundColor: t.colors.surfaceRaised, borderRadius: t.radius.lg, borderColor: t.colors.border }, t.shadow.lg]}>
             <MenuRow label="Impostazioni" onPress={() => choose(onOpenSettings)} color={t.colors.textPrimary} font={t.font.display} size={t.type.subheading.size} minH={t.touchMin} />
             <View style={{ height: 1, backgroundColor: t.colors.border }} />
@@ -67,6 +67,6 @@ function MenuRow(props: { label: string; onPress: () => void; color: string; fon
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: '#00000033', justifyContent: 'flex-start', alignItems: 'flex-end', paddingTop: 64, paddingRight: 16 },
+  backdrop: { flex: 1, justifyContent: 'flex-start', alignItems: 'flex-end', paddingTop: 64, paddingRight: 16 },
   sheet: { minWidth: 200, borderWidth: 1, overflow: 'hidden' },
 });

@@ -26,6 +26,8 @@ export interface ColorScheme {
   primary: string; primaryHover: string; primaryPress: string; primarySoft: string; primarySoft2: string;
   accent: string; accentSoft: string;
   border: string; borderStrong: string; focusRing: string;
+  /** Tinta dei veli (backdrop dei modali); usata con bassa opacità. */
+  scrim: string;
   success: string; successSoft: string;
   warning: string; warningSoft: string;
   danger: string; dangerHover: string; dangerSoft: string;
@@ -36,14 +38,14 @@ export interface ColorScheme {
 /** Colori semantici per tema. `primary` è sovrascritto dall'accento utente (vedi accents). */
 export const color: Record<'light' | 'dark', ColorScheme> = {
   light: {
-    bg: '#F1F4F7',
-    bgSunken: '#E7ECF1',
+    bg: '#F5F6F8',
+    bgSunken: '#E7EAEE',
     surface: '#FFFFFF',
     surfaceRaised: '#FFFFFF',
-    surfaceHover: '#F5F8FA',
-    textPrimary: '#16202B',
-    textSecondary: '#5B6878',
-    textTertiary: '#8995A3',
+    surfaceHover: '#F0F2F5',
+    textPrimary: '#191F26',
+    textSecondary: '#5C6773',
+    textTertiary: '#9098A3',
     textOnPrimary: '#16240F',
     textOnAccent: '#FFFFFF',
     primary: '#7CA84F',
@@ -53,9 +55,10 @@ export const color: Record<'light' | 'dark', ColorScheme> = {
     primarySoft2: '#D9E6C2',
     accent: '#C77D29',
     accentSoft: '#F6E7D2',
-    border: '#DCE3EA',
-    borderStrong: '#C3CDD8',
+    border: '#E4E7EB',
+    borderStrong: '#CBD2D9',
     focusRing: '#7CA84F',
+    scrim: '#16202B',
     success: '#2F8F5B',
     successSoft: '#DDEFE4',
     warning: '#C77D29',
@@ -89,14 +92,14 @@ export const color: Record<'light' | 'dark', ColorScheme> = {
     },
   },
   dark: {
-    bg: '#0E141B',
-    bgSunken: '#0A0F15',
-    surface: '#18212C',
-    surfaceRaised: '#212C39',
-    surfaceHover: '#1F2A36',
-    textPrimary: '#EAEEF2',
-    textSecondary: '#9DAAB8',
-    textTertiary: '#6C7A89',
+    bg: '#0F1217',
+    bgSunken: '#0A0D12',
+    surface: '#181D24',
+    surfaceRaised: '#212833',
+    surfaceHover: '#1E242C',
+    textPrimary: '#ECF1F6',
+    textSecondary: '#9AA6B2',
+    textTertiary: '#646F7A',
     textOnPrimary: '#0C1A0F',
     textOnAccent: '#1B1206',
     primary: '#9CC57E',
@@ -106,9 +109,10 @@ export const color: Record<'light' | 'dark', ColorScheme> = {
     primarySoft2: '#2A3D20',
     accent: '#E0A24C',
     accentSoft: '#36281550',
-    border: '#2A3540',
-    borderStrong: '#3A4856',
+    border: '#252C35',
+    borderStrong: '#36404B',
     focusRing: '#9CC57E',
+    scrim: '#000000',
     success: '#4FB47C',
     successSoft: '#16301F',
     warning: '#E0A24C',
