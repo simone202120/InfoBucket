@@ -98,3 +98,12 @@ docker run -d ...   # stesso comando di sopra
 Vedi `docs/INSTALL_ANDROID.md` per il build standalone con EAS
 (`eas build -p android`). Per l'uso "vero" (share intent reale, installabile)
 serve l'APK; Expo Go va bene solo per lo sviluppo.
+
+> [!IMPORTANT]
+> **Serve un rebuild nativo (non un update OTA) — moduli nativi del Piano 3.**
+> Il branch `piano-spec-3` aggiunge due dipendenze **native**:
+> `react-native-gesture-handler` (swipe sulle card) ed `expo-haptics` (feedback).
+> Un aggiornamento JS "over-the-air" (EAS Update/Metro) **non** le include: va
+> rifatto il build con `eas build -p android` e reinstallato l'APK. Tutte le altre
+> modifiche dei Piani 2/3 sono lato client e arrivano con lo stesso build.
+> Togli questa nota quando il primo APK con queste dipendenze è distribuito.
