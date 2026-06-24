@@ -24,6 +24,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { hostnameOf, isValidHttpUrl } from '@/lib/source';
 import { useTheme, useToast, type Theme } from '@/theme';
+import { haptics } from '@/theme/haptics';
 import {
   BucketChip,
   Button,
@@ -106,6 +107,7 @@ export function ReviewScreen({ id }: ReviewScreenProps): JSX.Element {
           const ok = await confirm(target);
           if (ok) {
             showToast({ message: `Salvato in «${displayName}»` });
+            haptics.success();
             router.back();
           }
           return ok;

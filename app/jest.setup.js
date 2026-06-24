@@ -9,3 +9,13 @@ jest.mock(
   '@react-native-async-storage/async-storage',
   () => require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
+
+// Mock di default per expo-haptics: il wrapper `haptics` è "fire and forget" e
+// in ambiente test non c'è motore aptico. I test che lo verificano usano il
+// proprio jest.mock locale.
+jest.mock('expo-haptics', () => ({
+  notificationAsync: jest.fn().mockResolvedValue(undefined),
+  impactAsync: jest.fn().mockResolvedValue(undefined),
+  NotificationFeedbackType: { Success: 'success' },
+  ImpactFeedbackStyle: { Light: 'light' },
+}));
