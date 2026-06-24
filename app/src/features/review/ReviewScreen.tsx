@@ -7,6 +7,8 @@
  */
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
+import { useFocusRefetch } from '@/features/useFocusRefetch';
+import { usePolling } from '@/features/usePolling';
 import {
   ActivityIndicator,
   Alert,
@@ -21,7 +23,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { hostnameOf, isValidHttpUrl } from '@/lib/source';
-import { useTheme, type Theme } from '@/theme';
+import { useTheme, useToast, type Theme } from '@/theme';
 import {
   BucketChip,
   Button,
@@ -31,17 +33,12 @@ import {
   StatusBadge,
   Tag,
   TextField,
+  TranscriptSheet,
 } from '@/theme/components';
 import { LinkIcon, PlusIcon, RefreshIcon, TrashIcon } from '@/theme/icons';
 import type { BadgeStatus } from '@/theme/components';
-import type { Item, SourceType } from '@/types/domain';
+import type { Item } from '@/types/domain';
 import { useItemDetail, type ConfirmTarget } from './useItemDetail';
-
-/** Tipi di fonte per cui ha senso mostrare l'anteprima della trascrizione. */
-const TRANSCRIBED_SOURCES: ReadonlySet<SourceType> = new Set<SourceType>(['youtube', 'reel', 'tiktok']);
-
-/** Numero di caratteri di trascrizione mostrati in anteprima. */
-const TRANSCRIPT_PREVIEW_CHARS = 600;
 
 export interface ReviewScreenProps {
   id: string;
@@ -50,6 +47,7 @@ export interface ReviewScreenProps {
 export function ReviewScreen({ id }: ReviewScreenProps): JSX.Element {
   const t = useTheme();
   const router = useRouter();
+  const { showToast } = useToast();
   const {
     item,
     buckets,
@@ -58,11 +56,14 @@ export function ReviewScreen({ id }: ReviewScreenProps): JSX.Element {
     regenerating,
     confirming,
     error,
+    refetch,
     save,
     regenerateItem,
     confirm,
     remove,
   } = useItemDetail(id);
+  useFocusRefetch(refetch);
+  usePolling(refetch, { active: item?.status === 'processing' });
 
   if (loading && !item) {
     return (
@@ -101,7 +102,14 @@ export function ReviewScreen({ id }: ReviewScreenProps): JSX.Element {
         error={error}
         onSave={save}
         onRegenerate={regenerateItem}
-        onConfirm={confirm}
+        onConfirm={async (target, displayName) => {
+          const ok = await confirm(target);
+          if (ok) {
+            showToast({ message: `Salvato in «${displayName}»` });
+            router.back();
+          }
+          return ok;
+        }}
         onRemove={async () => {
           const ok = await remove();
           if (ok) router.back();
@@ -158,7 +166,7 @@ interface ReviewBodyProps {
   error: string | null;
   onSave: ReturnType<typeof useItemDetail>['save'];
   onRegenerate: ReturnType<typeof useItemDetail>['regenerateItem'];
-  onConfirm: ReturnType<typeof useItemDetail>['confirm'];
+  onConfirm: (target: ConfirmTarget, displayName: string) => Promise<boolean>;
   onRemove: () => void;
 }
 
@@ -182,6 +190,8 @@ function ReviewBody({
   const [note, setNote] = useState(item.note ?? '');
   const [tags, setTags] = useState<string[]>(item.tags);
   const [newTag, setNewTag] = useState('');
+  // Apertura dello sheet con testo/trascrizione completa.
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   useEffect(() => {
     setSummary(item.summary ?? '');
@@ -226,7 +236,10 @@ function ReviewBody({
     );
   };
 
-  const transcript = transcriptPreview(item);
+  const raw = item.rawContent?.trim() ?? '';
+  const hasText = raw.length > 0;
+  const isAv = item.sourceType === 'youtube' || item.sourceType === 'reel' || item.sourceType === 'tiktok';
+  const textLabel = isAv ? 'trascrizione' : 'testo';
 
   return (
     <KeyboardAvoidingView
@@ -356,7 +369,15 @@ function ReviewBody({
           </Button>
         </View>
 
-        {transcript ? <TranscriptPreview text={transcript} /> : null}
+        {hasText ? (
+          <Button
+            variant="secondary"
+            onPress={() => setSheetOpen(true)}
+            accessibilityLabel={`Apri ${textLabel}`}
+          >
+            {isAv ? 'Apri trascrizione' : 'Apri testo'}
+          </Button>
+        ) : null}
 
         {/* Conferma in un bucket */}
         <ConfirmBucket item={item} buckets={buckets} confirming={confirming} onConfirm={onConfirm} />
@@ -372,6 +393,15 @@ function ReviewBody({
           Elimina
         </Button>
       </ScrollView>
+
+      {hasText && (
+        <TranscriptSheet
+          visible={sheetOpen}
+          title={isAv ? 'Trascrizione' : 'Testo'}
+          text={raw}
+          onClose={() => setSheetOpen(false)}
+        />
+      )}
     </KeyboardAvoidingView>
   );
 }
@@ -380,7 +410,7 @@ interface ConfirmBucketProps {
   item: Item;
   buckets: ReturnType<typeof useItemDetail>['buckets'];
   confirming: boolean;
-  onConfirm: ReturnType<typeof useItemDetail>['confirm'];
+  onConfirm: (target: ConfirmTarget, displayName: string) => Promise<boolean>;
 }
 
 function ConfirmBucket({ item, buckets, confirming, onConfirm }: ConfirmBucketProps): JSX.Element {
@@ -406,7 +436,7 @@ function ConfirmBucket({ item, buckets, confirming, onConfirm }: ConfirmBucketPr
 
   const createNew = () => {
     if (!name.trim()) return;
-    void onConfirm({ kind: 'new', name, description });
+    void onConfirm({ kind: 'new', name, description }, name);
   };
 
   return (
@@ -420,7 +450,7 @@ function ConfirmBucket({ item, buckets, confirming, onConfirm }: ConfirmBucketPr
           <BucketChip
             name={suggestion.name}
             isNew={suggestion.isNew}
-            onAccept={() => void onConfirm(suggestion.target)}
+            onAccept={() => void onConfirm(suggestion.target, suggestion.name)}
           />
         </View>
       ) : null}
@@ -434,7 +464,7 @@ function ConfirmBucket({ item, buckets, confirming, onConfirm }: ConfirmBucketPr
               <BucketChip
                 key={bucket.id}
                 name={bucket.name}
-                onAccept={() => void onConfirm({ kind: 'existing', bucketId: bucket.id })}
+                onAccept={() => void onConfirm({ kind: 'existing', bucketId: bucket.id }, bucket.name)}
               />
             ))}
           </View>
@@ -470,33 +500,6 @@ function ConfirmBucket({ item, buckets, confirming, onConfirm }: ConfirmBucketPr
           Crea un nuovo bucket
         </Button>
       )}
-    </View>
-  );
-}
-
-function TranscriptPreview({ text }: { text: string }): JSX.Element {
-  const t = useTheme();
-  return (
-    <View style={{ gap: t.space[3] }}>
-      <SectionTitle>Trascrizione</SectionTitle>
-      <View
-        style={{
-          backgroundColor: t.colors.bgSunken,
-          borderRadius: t.radius.sm,
-          padding: t.space[4],
-        }}
-      >
-        <Text
-          style={{
-            fontFamily: t.font.read,
-            fontSize: t.type.readSm.size,
-            lineHeight: t.type.readSm.lh,
-            color: t.colors.textSecondary,
-          }}
-        >
-          {text}
-        </Text>
-      </View>
     </View>
   );
 }
@@ -556,14 +559,6 @@ function sourceName(item: Item): string | undefined {
 /** Lo status di dominio mappa direttamente sul badge (senza "expiring" qui). */
 function badgeStatus(status: Item['status']): BadgeStatus {
   return status;
-}
-
-/** Anteprima della trascrizione per reel/video, se il raw_content è presente. */
-function transcriptPreview(item: Item): string | null {
-  if (!TRANSCRIBED_SOURCES.has(item.sourceType)) return null;
-  const raw = item.rawContent?.trim();
-  if (!raw) return null;
-  return raw.length > TRANSCRIPT_PREVIEW_CHARS ? `${raw.slice(0, TRANSCRIPT_PREVIEW_CHARS)}…` : raw;
 }
 
 /** Due liste di tag sono uguali se hanno gli stessi elementi nello stesso ordine. */

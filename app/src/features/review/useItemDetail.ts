@@ -30,6 +30,8 @@ export interface ItemDetailState {
   regenerating: boolean;
   confirming: boolean;
   error: string | null;
+  /** Ricarica l'item e i bucket dal server. */
+  refetch: () => Promise<void>;
   /** Salva le modifiche ai campi editabili e aggiorna l'item locale. */
   save: (edits: ItemEdits) => Promise<boolean>;
   /** Ri-elabora tenendo conto della nota aggiornata, poi ricarica l'item. */
@@ -161,6 +163,7 @@ export function useItemDetail(id: string): ItemDetailState {
     regenerating,
     confirming,
     error,
+    refetch: load,
     save,
     regenerateItem,
     confirm,

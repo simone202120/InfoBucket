@@ -8,11 +8,11 @@ function renderInTheme(node: ReactNode) {
 }
 
 const STATUSES: { status: BadgeStatus; label: string }[] = [
-  { status: 'processing', label: 'Processing' },
-  { status: 'ready', label: 'Ready' },
-  { status: 'saved', label: 'Saved' },
-  { status: 'archived', label: 'Archived' },
-  { status: 'expiring', label: 'Expiring' },
+  { status: 'processing', label: 'In lavorazione' },
+  { status: 'ready', label: 'Pronto' },
+  { status: 'saved', label: 'Salvato' },
+  { status: 'archived', label: 'Archiviato' },
+  { status: 'expiring', label: 'In scadenza' },
 ];
 
 describe('StatusBadge', () => {
@@ -22,8 +22,8 @@ describe('StatusBadge', () => {
   });
 
   it('sovrascrive l\'etichetta con children (countdown)', () => {
-    const { getByText, queryByText } = renderInTheme(<StatusBadge status="expiring">In 3 days</StatusBadge>);
-    expect(getByText('In 3 days')).toBeTruthy();
-    expect(queryByText('Expiring')).toBeNull();
+    const { getByText, queryByText } = renderInTheme(<StatusBadge status="expiring">Tra 3 giorni</StatusBadge>);
+    expect(getByText('Tra 3 giorni')).toBeTruthy();
+    expect(queryByText('In scadenza')).toBeNull();
   });
 });

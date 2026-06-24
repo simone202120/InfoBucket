@@ -1,7 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   KeyboardAvoidingView,
   Modal,
@@ -12,14 +11,18 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '@/features/auth';
+import { useFocusRefetch } from '@/features/useFocusRefetch';
 import { useLibrary } from '@/features/library/useLibrary';
 import { createBucket } from '@/lib/buckets';
 import { FadeInUp, staggerDelay, useTheme } from '@/theme';
 import {
+  AvatarMenu,
   BucketCard,
   Button,
   EmptyState,
   ErrorBanner,
+  ListSkeleton,
   NoteField,
   TextField,
 } from '@/theme/components';
@@ -29,7 +32,9 @@ import { LibraryIcon, PlusIcon, XIcon } from '@/theme/icons';
 export default function LibraryScreen() {
   const t = useTheme();
   const router = useRouter();
+  const { user, signOut } = useAuth();
   const { buckets, loading, refreshing, error, refetch } = useLibrary();
+  useFocusRefetch(refetch);
   const [creating, setCreating] = useState(false);
 
   const onCreated = async () => {
@@ -43,9 +48,16 @@ export default function LibraryScreen() {
         <Text style={{ color: t.colors.textPrimary, fontFamily: t.font.displayBold, fontSize: t.type.title.size, lineHeight: t.type.title.lh }}>
           Libreria
         </Text>
-        <Button variant="ghost" size="sm" iconLeft={<PlusIcon color={t.colors.primary} size={18} />} onPress={() => setCreating(true)}>
-          Nuovo bucket
-        </Button>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space[1] }}>
+          <Button variant="ghost" size="sm" iconLeft={<PlusIcon color={t.colors.primary} size={18} />} onPress={() => setCreating(true)}>
+            Nuovo bucket
+          </Button>
+          <AvatarMenu
+            email={user?.email ?? null}
+            onOpenSettings={() => router.push('/settings')}
+            onSignOut={() => void signOut()}
+          />
+        </View>
       </View>
 
       {error ? (
@@ -55,8 +67,8 @@ export default function LibraryScreen() {
       ) : null}
 
       {loading && buckets.length === 0 ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator color={t.colors.primary} />
+        <View style={{ padding: t.gutter }}>
+          <ListSkeleton />
         </View>
       ) : (
         <FlatList

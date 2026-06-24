@@ -11,7 +11,7 @@ import { ActivityIndicator, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth, type AuthStatus } from '@/features/auth';
 import { extractFirstUrl } from '@/lib/source';
-import { ThemeProvider, useTheme } from '@/theme';
+import { ThemeProvider, ToastProvider, useTheme } from '@/theme';
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -28,10 +28,12 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ShareIntentProvider>
         <ThemeProvider>
-          <AuthProvider>
-            <StatusBar style="auto" />
-            <RootNavigator />
-          </AuthProvider>
+          <ToastProvider>
+            <AuthProvider>
+              <StatusBar style="auto" />
+              <RootNavigator />
+            </AuthProvider>
+          </ToastProvider>
         </ThemeProvider>
       </ShareIntentProvider>
     </SafeAreaProvider>

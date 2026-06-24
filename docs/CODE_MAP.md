@@ -4,12 +4,14 @@ Mappa di moduli, dipendenze e relazioni. Serve a capire **gli impatti di una
 modifica** prima di farla. Aggiornala a ogni cambiamento strutturale (regola
 in `CLAUDE.md` §6).
 
-> Stato: **v1 completa** (Fasi 0-7). App: login, Inbox, aggiungi-via-URL, review/
-> conferma/rigenera, archivio, ricerca ibrida e **share intent Android**. Backend:
+> Stato: **v1 completa + fix funzionali** (Fasi 0-7). App: login, Inbox, aggiungi-via-URL,
+> review/conferma/rigenera, archivio, ricerca ibrida e **share intent Android**. Backend:
 > migrations 0001-0005 (schema, RLS, RPC ricerca, cron, innesco dispatch) e tre Edge
 > Functions (`dispatch`, `generate`, `search`) con estrazione inline del percorso
 > leggero. Worker: estrazione media (yt-dlp + ffmpeg + Whisper) implementata.
 > Gli item percorrono la pipeline completa `processing → ready`.
+> Fix piano 1: polling durante la lavorazione, refetch al focus, toast di conferma,
+> sheet trascrizione, AvatarMenu (Impostazioni/Esci), skeleton di lista.
 
 ---
 
@@ -42,7 +44,12 @@ Entry: `expo-router` (cartella `app/app/`).
 | `src/theme/tokens.ts` | Valori grezzi del design system (colori light/dark, accenti, type, spacing, radii, shadow). Porting dei `.css` | — |
 | `src/theme/index.ts` | **Adapter del tema**: `ThemeProvider`, `useTheme`, `useThemeControls`, `sourceColor()`. UNICO punto che l'app conosce per lo stile | `tokens.ts`, `types/domain.ts` |
 | `src/theme/icons.tsx` | Icone (wrapper `lucide-react-native`, default coerenti) + `SOURCE_ICON` | `types/domain.ts` |
-| `src/theme/components/*` | **Libreria UI** (RN) del design system: Button, TextField, NoteField, SourceStamp, StatusBadge, Tag, BucketChip, **BucketCard**, ItemCard, EmptyState, ErrorBanner, AddButton, **TabBar** (barra galleggiante con pill attiva che si espande). Stile solo da `useTheme()` | `@/theme`, `icons` |
+| `src/theme/components/*` | **Libreria UI** (RN) del design system: Button, TextField, NoteField, SourceStamp, StatusBadge, Tag, BucketChip, **BucketCard**, ItemCard, EmptyState, ErrorBanner, AddButton, **TabBar** (barra galleggiante con pill attiva che si espande), **AvatarMenu**, **ListSkeleton**, **Toast**, **TranscriptSheet**. Stile solo da `useTheme()` | `@/theme`, `icons` |
+| `src/theme/ToastProvider.tsx` | Context + provider per il feedback effimero (`useToast().showToast`). Montato nel root layout; `Toast.tsx` è il componente visivo | `@/theme` |
+| `src/theme/components/Toast.tsx` | Pill di notifica effimera (messaggio + auto-dismiss); usata tramite `useToast` | `@/theme` |
+| `src/theme/components/TranscriptSheet.tsx` | Sheet a tutta pagina con trascrizione/testo completo, disponibile per tutte le fonti che espongono `raw_content` | `@/theme` |
+| `src/theme/components/AvatarMenu.tsx` | Avatar utente con menu a tendina (Impostazioni / Esci) negli header delle schermate principali | `@/theme`, `AuthProvider` |
+| `src/theme/components/ListSkeleton.tsx` | Placeholder skeleton di lista mostrato al primo caricamento, prima che i dati arrivino | `@/theme` |
 | `src/theme/motion.tsx` | Primitive di animazione sobrie (`FadeInUp`, `PressableScale`, `staggerDelay`, `useReducedMotion`), rispettano "riduci movimento". Esposte da `@/theme` | `@/theme` |
 | `src/lib/env.ts` | Legge/valida `EXPO_PUBLIC_*` (solo URL + anon key, nessun segreto) | — |
 | `src/lib/supabase.ts` | Client Supabase (anon key + auth, AsyncStorage) | `env.ts` |
@@ -53,10 +60,12 @@ Entry: `expo-router` (cartella `app/app/`).
 | `src/lib/buckets.ts` | **Repository `buckets`**: `listBuckets`, `createBucket` | `supabase`, `mappers` |
 | `src/features/auth/` | `AuthProvider` + `useAuth` (email/password Supabase, sessione persistita, errori in italiano) | `@/lib/supabase` |
 | `src/features/useItemList.ts` | Hook generico lista item (loading/refreshing/error/refetch), riusato da Inbox e Archivio | — |
+| `src/features/usePolling.ts` | Avvia un intervallo di polling sul refetch di una lista finché almeno un item è in stato `processing`; si ferma da solo quando la coda si svuota | — |
+| `src/features/useFocusRefetch.ts` | Esegue un refetch automatico ogni volta che la schermata torna in foreground (via `useFocusEffect`) | expo-router |
 | `src/features/inbox/useInbox.ts` | Stato Inbox (su `useItemList` + `listInbox`) | `useItemList`, `@/lib/items` |
 | `src/features/archive/useArchive.ts` | Stato Archivio (su `useItemList` + `listArchived`) | `useItemList`, `@/lib/items` |
 | `src/features/review/useItemDetail.ts` | Stato dettaglio/review di un item: caricamento, conferma in bucket, modifica, rigenera, elimina | `@/lib/items`, `@/lib/buckets` |
-| `src/features/review/ReviewScreen.tsx` | UI di review: summary eroe, tag, scelta bucket, azioni (conferma/rigenera/elimina) | `useItemDetail`, `@/theme` |
+| `src/features/review/ReviewScreen.tsx` | UI di review: summary eroe, tag, scelta bucket, azioni (conferma/rigenera/elimina); conferma mostra toast e torna indietro; bottone trascrizione apre `TranscriptSheet` | `useItemDetail`, `@/theme` |
 | `src/features/search/useSearch.ts` | Stato ricerca: query con debounce, fusione risultati, loading/error | `@/lib/items` |
 | `src/features/library/useLibrary.ts` | Stato Libreria: bucket con statistiche | `@/lib/buckets` |
 | `src/features/library/useBucketDetail.ts` | Stato dettaglio bucket: testata + item del bucket | `@/lib/buckets`, `@/lib/items` |
@@ -69,9 +78,9 @@ Entry: `expo-router` (cartella `app/app/`).
 | `_layout` | `app/_layout.tsx` | Carica font, monta `ThemeProvider`+`AuthProvider`+`ShareIntentProvider`, **auth-gate** (redirect login↔app) e **share intent**: a link condiviso → apre /add precompilato (`extractFirstUrl`). Registra le route (incl. `bucket/[id]`, `settings` modale) |
 | `(tabs)/_layout` | `app/(tabs)/_layout.tsx` | Monta il **`TabBar` del design system** (Inbox·Libreria·Cerca) adattando lo stato di expo-router (rotta↔tab) + **AddButton "+" flottante GLOBALE** sopra la barra |
 | `/login` | `app/login.tsx` | Accesso/registrazione (usa `useAuth`, `Button`, `TextField`, `ErrorBanner`) |
-| `/` (tab) | `app/(tabs)/index.tsx` | **Inbox**: lista `ItemCard` (comparsa staggered), pull-to-refresh, header con Archivio + **Impostazioni**, stato vuoto/errore |
+| `/` (tab) | `app/(tabs)/index.tsx` | **Inbox**: lista `ItemCard` (comparsa staggered), pull-to-refresh, header con Archivio + **AvatarMenu** (sostituisce l'ingranaggio), skeleton al primo caricamento, polling automatico se ci sono item in lavorazione, refetch al focus; stato vuoto/errore |
 | `/search` (tab) | `app/(tabs)/search.tsx` | **Ricerca** ibrida (semantica + keyword) su saved/archived via `useSearch` → Edge Function `search` |
-| `/library` (tab) | `app/(tabs)/library.tsx` | **Libreria**: griglia di `BucketCard` (`useLibrary`), "Nuovo bucket", tap → dettaglio bucket |
+| `/library` (tab) | `app/(tabs)/library.tsx` | **Libreria**: griglia di `BucketCard` (`useLibrary`), "Nuovo bucket", tap → dettaglio bucket; refetch al focus |
 | `/bucket/[id]` | `app/bucket/[id].tsx` | **Dettaglio bucket** (`useBucketDetail`): elementi salvati, tap → review |
 | `/settings` | `app/settings.tsx` | **Impostazioni** (modale): account/logout, aspetto (accento+tema), gestione bucket, ciclo di vita |
 | `/add` | `app/add.tsx` | Modale **Aggiungi-URL** (usa `addItemByUrl`, `TextField`, `NoteField`) |
@@ -167,9 +176,10 @@ della riga `items` (`mappers.ts` ↔ schema).
 
 - `app/`: Jest — utility pure (`source`, `lifecycle`, `mappers`), repository (`items`,
   `items-mutations`, `buckets`), hook (`useInbox`, `useArchive`, `useSearch`,
-  `useItemDetail`), auth (`AuthContext`), `ReviewScreen`, libreria componenti UI,
-  schermata `add`, Libreria/dettaglio bucket, Impostazioni, BucketCard, motion.
-  `npm test` → **120 verdi** (28 suite), `typecheck` e `lint` puliti.
+  `useItemDetail`, `usePolling`, `useFocusRefetch`), auth (`AuthContext`), `ReviewScreen`,
+  libreria componenti UI (incl. `AvatarMenu`, `ListSkeleton`, `Toast`, `TranscriptSheet`,
+  `ToastProvider`), schermata `add`, Libreria/dettaglio bucket, Impostazioni, BucketCard, motion.
+  `npm test` → **140 verdi** (36 suite), `typecheck` e `lint` puliti.
 - `worker/`: Vitest — `composeRawContent`, parser caption, estrazione media
   (`media`, inclusi i cookie yt-dlp), validazione env (`env`), loop di polling
   (`index`). `npm test` → **57 verdi** (5 file).
