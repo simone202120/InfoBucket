@@ -3,7 +3,7 @@ import { KeyboardAvoidingView, Platform, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/features/auth';
 import { useTheme } from '@/theme';
-import { Button, ErrorBanner, TextField } from '@/theme/components';
+import { Button, ErrorBanner, TextField, Wordmark } from '@/theme/components';
 
 type Mode = 'signin' | 'signup';
 
@@ -33,10 +33,8 @@ export default function LoginScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1, justifyContent: 'center', padding: t.gutter, gap: t.space[5] }}
       >
-        <View style={{ gap: t.space[2], marginBottom: t.space[4] }}>
-          <Text style={{ color: t.colors.textPrimary, fontFamily: t.font.displayBold, fontSize: t.type.display.size, lineHeight: t.type.display.lh }}>
-            InfoBucket
-          </Text>
+        <View style={{ gap: t.space[4], marginBottom: t.space[4] }}>
+          <Wordmark />
           <Text style={{ color: t.colors.textSecondary, fontFamily: t.font.read, fontSize: t.type.read.size, lineHeight: t.type.read.lh }}>
             {mode === 'signin' ? 'Accedi per continuare.' : 'Crea il tuo account.'}
           </Text>
