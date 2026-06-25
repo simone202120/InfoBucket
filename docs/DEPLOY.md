@@ -7,19 +7,6 @@ vedi `docs/CODE_MAP.md`; per la prova in locale `docs/RUN_LOCAL.md`.
 I segreti vivono SOLO lato server (Edge Functions secrets + env della VPS), MAI nel
 repo o nel client (CLAUDE.md §3).
 
-> [!IMPORTANT]
-> **Deploy pendente — function `dispatch` (fix YouTube).** Il branch
-> `claude/link-comments-youtube-issues-3zlztt` riscrive l'estrazione YouTube
-> (`_shared/youtube.ts`): nel percorso leggero ricava **titolo + descrizione +
-> canale** via **InnerTube** (con fallback pagina watch e oEmbed) e tenta la
-> trascrizione dai sottotitoli pubblici. Prima YouTube dipendeva dal solo scraping
-> della pagina watch (che dagli IP cloud fallisce) e dall'oEmbed (solo titolo+canale,
-> mai la descrizione), e poteva restare "senza contenuto" o bloccato in inbox.
-> `dispatch` ora compone il contenuto ricco e chiama **sempre** `generate`. **Il fix
-> ha effetto solo dopo aver ridistribuito la function**:
-> `supabase functions deploy dispatch`.
-> Togli questa nota una volta fatto il deploy.
-
 ---
 
 ## 1. Edge Functions (Supabase cloud)
