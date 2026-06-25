@@ -1,0 +1,32 @@
+# Deploy delle Edge Functions Supabase senza terminale locale.
+# Si lancia a mano dalla tab "Actions" del repo (pulsante "Run workflow") e
+# parte da solo quando cambia qualcosa sotto supabase/functions/ su main.
+# Richiede due secret del repo (Settings -> Secrets and variables -> Actions):
+#   - SUPABASE_ACCESS_TOKEN : token personale da https://supabase.com/dashboard/account/tokens
+#   - SUPABASE_PROJECT_REF  : il ref del progetto (es. abcd1234...) dalla URL del dashboard
+# I segreti NON stanno nel repo: vivono solo lato GitHub/Supabase (CLAUDE.md §3).
+name: Deploy Supabase Functions
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+    paths:
+      - "supabase/functions/**"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # Deploy di tutte le function (dispatch, generate, search): garantisce che
+      # il cloud rifletta sempre il codice del repo.
+      - name: Deploy functions
+        run: supabase functions deploy --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
