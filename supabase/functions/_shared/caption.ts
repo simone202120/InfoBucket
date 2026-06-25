@@ -133,16 +133,22 @@ function decodeEntities(value: string): string {
 }
 
 /**
- * Compone il blocco etichettato `[Caption]/[Autore]` (gemello di
- * worker/src/rawContent.ts, ma qui senza trascrizione: quella la aggiunge il
- * worker). Include solo le sezioni presenti; tutto vuoto → stringa vuota.
+ * Compone il blocco etichettato `[Caption]/[Autore]/[Trascrizione]` (gemello di
+ * worker/src/rawContent.ts). La trascrizione è opzionale: tiktok/reel la lasciano
+ * al worker, mentre YouTube può già averla dai sottotitoli pubblici nel percorso
+ * leggero. Include solo le sezioni presenti; tutto vuoto → stringa vuota.
  */
-export function composeCaptionRawContent(meta: CaptionMetadata): string {
+export function composeCaptionRawContent(
+  meta: CaptionMetadata,
+  transcript?: string | null,
+): string {
   const sections: string[] = [];
   const caption = nullable(meta.caption);
   const author = nullable(meta.author);
+  const transcriptText = nullable(transcript);
   if (caption) sections.push(`[Caption] ${caption}`);
   if (author) sections.push(`[Autore] ${author}`);
+  if (transcriptText) sections.push(`[Trascrizione] ${transcriptText}`);
   return sections.join("\n");
 }
 

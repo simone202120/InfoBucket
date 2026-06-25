@@ -133,11 +133,11 @@ directory su EAS va impostata a `app`.
 | `functions/_shared/text.ts` | Normalizzazione/troncamento testo, html→testo |
 | `functions/_shared/extract-article.ts` | Estrazione articolo (readability + linkedom, fallback strip HTML) |
 | `functions/_shared/extract-document.ts` | Estrazione documento PDF (unpdf) e testo semplice |
-| `functions/_shared/youtube-transcript.ts` | Transcript pubblico YouTube (timedtext) |
+| `functions/_shared/youtube.ts` | Estrazione YouTube lato server: titolo + **descrizione** + canale via **InnerTube** (fallback pagina watch e oEmbed) e transcript pubblico (timedtext). Dà a `generate` un contenuto ricco senza worker |
 | `functions/_shared/fetch-remote.ts` | Fetch difensivo (timeout/limiti, fetcher iniettabile) |
 | `functions/_shared/invoke.ts` | Invocazione function→function (es. dispatch → generate) con service role |
 | `functions/_shared/{cors,supabase}.ts` | Helper CORS + client service role / user (inoltra JWT) |
-| `functions/dispatch/index.ts` | Instrada un item: percorso leggero (article/document/yt-transcript, **e caption tiktok/reel/youtube via oEmbed/OG**) → estrae `raw_content` inline e chiama `generate`; per tiktok/reel/youtube-da-caption accoda anche il media (`queueMedia` → `media_stage='pending'`) per la trascrizione. Solo yt senza transcript né caption oEmbed va dritto al worker. Scarica i documenti dal bucket Storage `documents` |
+| `functions/dispatch/index.ts` | Instrada un item: percorso leggero (article/document, **YouTube via InnerTube** = titolo+descrizione+canale+transcript, **caption tiktok/reel via oEmbed/OG**) → estrae `raw_content` inline e chiama `generate`; per tiktok/reel e per YouTube senza transcript pubblico accoda anche il media (`queueMedia` → `media_stage='pending'`) per la trascrizione audio. Solo le fonti senza alcun metadato pubblico vanno dritte al worker. Scarica i documenti dal bucket Storage `documents` |
 | `functions/generate/index.ts` | Cuore AI: OpenRouter (summary/tag/bucket) + OpenAI embedding → `ready`. Idempotente (riusata per la rigenerazione). Errori non fanno sparire l'item |
 | `functions/search/index.ts` | Ricerca user-scoped: genera l'embedding query (OpenAI) e invoca la RPC `search_items` nel contesto utente (JWT → RLS). `verify_jwt=true` |
 | `.env.example`, `config.toml`, `README.md` | Secrets (placeholder), config CLI (incl. `verify_jwt` per function), istruzioni + setup Vault |

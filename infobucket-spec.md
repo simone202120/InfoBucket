@@ -199,11 +199,11 @@ Note sul modello:
    - presenza di `storage_path` → `document`
    - altrimenti `article` (URL http) o `other`.
 2. **Instrada**:
-   - **Leggero** (`article`, `document`, e `youtube` **se** il transcript pubblico è disponibile): estrae `raw_content` **inline** nella Edge Function, poi chiama `generate`.
+   - **Leggero** (`article`, `document`, e `youtube` con metadati pubblici): estrae `raw_content` **inline** nella Edge Function, poi chiama `generate`.
      - `article`: fetch pagina + estrazione testo leggibile (readability / HTML→testo).
      - `document`: estrae testo dal file in Storage (PDF e formati comuni).
-     - `youtube`: prova a recuperare il transcript pubblico; **se c'è**, percorso leggero; **se non c'è**, passa al percorso media.
-   - **Media** (`reel`, `tiktok`, `youtube` senza transcript): NON estrae nulla qui; imposta `media_stage = 'pending'` e termina. Ci penserà il worker (§7).
+     - `youtube`: ricava **titolo + descrizione + canale** via InnerTube (fallback pagina watch e oEmbed) e tenta il transcript pubblico. Se c'è il transcript, contenuto completo; altrimenti compone comunque titolo+descrizione (riassunto utile subito) e accoda l'audio al worker per la trascrizione. Va al percorso media solo se non si ottiene **nessun** metadato pubblico.
+   - **Media** (`reel`, `tiktok`, e `youtube` senza alcun metadato pubblico): NON estrae nulla qui; imposta `media_stage = 'pending'` e termina. Ci penserà il worker (§7).
 
 ### 6.2 `generate` (Edge Function) — CONDIVISA, il cuore AI
 

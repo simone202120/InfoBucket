@@ -15,7 +15,7 @@ import { createServiceClient } from "../_shared/supabase.ts";
 import { detectSourceType, type SourceType } from "../_shared/source-type.ts";
 import { extractArticle } from "../_shared/extract-article.ts";
 import { extractDocument } from "../_shared/extract-document.ts";
-import { fetchYoutubeTranscript } from "../_shared/youtube-transcript.ts";
+import { fetchYoutubeContent } from "../_shared/youtube.ts";
 import { fetchText } from "../_shared/fetch-remote.ts";
 import { composeCaptionRawContent, fetchLightCaption } from "../_shared/caption.ts";
 import { invokeFunction } from "../_shared/invoke.ts";
@@ -175,16 +175,21 @@ async function extractRawContent(
 
     case "youtube": {
       if (!item.source_url) return { route: "media" };
-      const transcript = await fetchYoutubeTranscript(item.source_url);
-      // Transcript pubblico disponibile: è già il contenuto completo.
-      if (transcript) return { route: "light", rawContent: transcript };
-      // Niente transcript (gli IP cloud vengono spesso bloccati): prova la caption
-      // oEmbed (titolo + canale) per dare un riassunto SUBITO — come tiktok/reel — e
-      // accoda comunque l'audio al worker, che arricchirà con la trascrizione (§6.1).
-      const meta = await fetchLightCaption("youtube", item.source_url, fetchText);
-      const rawContent = composeCaptionRawContent(meta);
+      // Estrazione ricca lato server: titolo + DESCRIZIONE (le info sotto il video)
+      // + canale via InnerTube, con fallback a pagina watch e oEmbed; più la
+      // trascrizione dai sottotitoli pubblici, se disponibili (§6.1).
+      const yt = await fetchYoutubeContent(item.source_url);
+      const rawContent = composeCaptionRawContent(
+        { caption: yt.caption, author: yt.author },
+        yt.transcript,
+      );
+      // Trascrizione pubblica recuperata: contenuto completo, nessun worker serve.
+      if (yt.transcript) return { route: "light", rawContent };
+      // Niente sottotitoli pubblici, ma abbiamo titolo/descrizione/canale: genera
+      // SUBITO un riassunto utile e accoda l'audio al worker, che arricchirà con la
+      // trascrizione (Whisper) quando girerà.
       if (rawContent) return { route: "light", rawContent, queueMedia: true };
-      // Nemmeno la caption pubblica: lascia l'intera estrazione al worker.
+      // Nemmeno i metadati pubblici: l'intera estrazione va al worker.
       return { route: "media" };
     }
 

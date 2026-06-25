@@ -59,7 +59,7 @@ riscaricare la fonte.
 
 La logica pura sta in `functions/_shared/` ed è testata: `source-type`,
 `model-output`, `text` (normalizzazione/troncamento/html→testo), `extract-article`,
-`extract-document`, `youtube-transcript`, `ai` (prompt/embedding input),
+`extract-document`, `youtube` (InnerTube + transcript + parser), `ai` (prompt/embedding input),
 `fetch-remote` (fetch difensivo con fetcher iniettabile). Le chiamate di rete sono
 mockate nei test (nessuna chiamata reale).
 
